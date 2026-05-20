@@ -1,0 +1,49 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e09
+kind: Scheduled
+name: ARM — Suspicious management operations
+description: Bulk resource deletions / wildcard custom roles / SP credential add / diagnostic-setting tampering from a single identity.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureActivity
+    dataTypes:
+      - AzureActivity
+queryFrequency: 15m
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - PrivilegeEscalation
+  - Persistence
+  - DefenseEvasion
+  - Impact
+relevantTechniques:
+  - T1098
+  - T1562
+  - T1485
+query: |
+  AzureActivity
+  | where TimeGenerated > ago(1h)
+  | where ActivityStatusValue in ("Success", "Succeeded", "Started")
+  | extend Op = tostring(OperationNameValue)
+  | where Op has_any (
+        "MICROSOFT.AUTHORIZATION/ROLEDEFINITIONS/WRITE",
+        "MICROSOFT.RESOURCES/SUBSCRIPTIONS/RESOURCEGROUPS/DELETE",
+        "MICROSOFT.GRAPH/APPLICATIONS/PASSWORDADDITION",
+        "MICROSOFT.INSIGHTS/DIAGNOSTICSETTINGS/DELETE",
+        "MICROSOFT.SECURITY/PRICINGS/WRITE",
+        "MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/ACTION")
+  | summarize Count=count(), Ops=make_set(Op, 10), Resources=make_set(_ResourceId, 10)
+            by Caller, CallerIpAddress
+  | where Count >= 3
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: FullName
+        columnName: Caller
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: CallerIpAddress
+incidentConfiguration:
+  createIncident: true

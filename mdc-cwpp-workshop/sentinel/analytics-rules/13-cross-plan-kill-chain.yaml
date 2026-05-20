@@ -1,0 +1,45 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e13
+kind: Scheduled
+name: Cross-plan CWPP kill chain on single identity
+description: Same principal triggers alerts across multiple CWPP plans (Servers + ARM + Storage / KV / SQL) within 1h. High-confidence breach signal.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureSecurityCenter
+    dataTypes:
+      - SecurityAlert
+queryFrequency: 15m
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - Persistence
+  - LateralMovement
+  - Impact
+relevantTechniques:
+  - T1098
+  - T1078
+query: |
+  SecurityAlert
+  | where TimeGenerated > ago(1h)
+  | where ProviderName == "Azure Security Center"
+  | extend Caller = tostring(parse_json(Entities)[0].Name)
+  | extend Plan = tostring(parse_json(ExtendedProperties).["Defender plan"])
+  | where isnotempty(Caller) and isnotempty(Plan)
+  | summarize Plans=make_set(Plan), AlertNames=make_set(AlertName, 10),
+              FirstSeen=min(TimeGenerated), LastSeen=max(TimeGenerated),
+              Sev=max(AlertSeverity)
+            by Caller
+  | where array_length(Plans) >= 2
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: Name
+        columnName: Caller
+incidentConfiguration:
+  createIncident: true
+  groupingConfiguration:
+    enabled: true
+    matchingMethod: Selected
+    groupByEntities: [ Account ]
+    lookbackDuration: 2h

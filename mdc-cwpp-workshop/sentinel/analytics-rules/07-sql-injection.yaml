@@ -1,0 +1,39 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e07
+kind: Scheduled
+name: SQL — Potential SQL injection
+description: SQL audit events containing injection-style payloads or correlated MDC SQL injection alerts.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureSql
+    dataTypes:
+      - SQLSecurityAuditEvents
+queryFrequency: 15m
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - InitialAccess
+relevantTechniques:
+  - T1190
+query: |
+  SQLSecurityAuditEvents
+  | where TimeGenerated > ago(1h)
+  | where statement_s has_any (
+        "or 1=1", "OR 1=1", "' OR '1'='1", "UNION SELECT",
+        "xp_cmdshell", "OPENROWSET", "WAITFOR DELAY", "sp_configure",
+        "/*!", "--", "; DROP TABLE")
+  | summarize Count=count(), Samples=make_set(statement_s, 5)
+            by server_principal_name_s, client_ip_s, database_name_s
+  | where Count >= 1
+entityMappings:
+  - entityType: Account
+    fieldMappings:
+      - identifier: Name
+        columnName: server_principal_name_s
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: client_ip_s
+incidentConfiguration:
+  createIncident: true

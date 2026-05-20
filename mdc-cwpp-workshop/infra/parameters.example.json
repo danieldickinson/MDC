@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "envTag":            { "value": "pc" },
+    "location":          { "value": "westeurope" },
+    "adminUsername":     { "value": "mdcadmin" },
+    "adminPassword":     { "value": "REPLACE-WITH-SECURE-VALUE-12CharsMin!" },
+    "allowedSourceCidr": { "value": "203.0.113.42/32" },
+    "tags": {
+      "value": {
+        "env":      "poc-mdc",
+        "workshop": "cwpp-simulation",
+        "owner":    "you@contoso.com",
+        "expires":  "2026-06-30"
+      }
+    }
+  }
+}

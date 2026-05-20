@@ -1,0 +1,30 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e02
+kind: Scheduled
+name: EICAR test file detection (validation)
+description: Catches EICAR test-file detections from Defender for Servers (MDE) and Defender for Storage malware scanning. Workshop validation alert.
+severity: Low
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureSecurityCenter
+    dataTypes:
+      - SecurityAlert
+queryFrequency: 5m
+queryPeriod: 15m
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - Execution
+relevantTechniques:
+  - T1204
+query: |
+  SecurityAlert
+  | where TimeGenerated > ago(15m)
+  | where AlertName has_any ("EICAR", "test file", "Eicar-Test", "Antimalware Test File")
+  | project TimeGenerated, AlertName, CompromisedEntity, Description, AlertSeverity, ProductName
+entityMappings:
+  - entityType: Host
+    fieldMappings:
+      - identifier: HostName
+        columnName: CompromisedEntity
+incidentConfiguration:
+  createIncident: true

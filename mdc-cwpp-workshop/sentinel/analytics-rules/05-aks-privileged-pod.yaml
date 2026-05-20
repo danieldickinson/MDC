@@ -1,0 +1,44 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e05
+kind: Scheduled
+name: AKS — Privileged pod or sensitive hostPath created
+description: kube-audit indicating a pod was created with privileged:true or with hostPath mounting "/" or "/etc".
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureKubernetes
+    dataTypes:
+      - AzureDiagnostics
+queryFrequency: 10m
+queryPeriod: 30m
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - PrivilegeEscalation
+relevantTechniques:
+  - T1611
+  - T1610
+query: |
+  AzureDiagnostics
+  | where Category == "kube-audit"
+  | where TimeGenerated > ago(30m)
+  | extend log = parse_json(log_s)
+  | where log.verb == "create" and log.objectRef.resource == "pods"
+  | extend pod = log.requestObject
+  | extend
+      IsPrivileged = tostring(pod.spec.containers[0].securityContext.privileged),
+      HostPaths = extract_all(@"\"hostPath\":\s*\{[^}]*\"path\":\s*\"([^\"]+)\"", tostring(pod))
+  | where IsPrivileged == "true" or array_length(HostPaths) > 0
+  | project TimeGenerated, ResourceId, PodName=tostring(log.objectRef.name),
+            Namespace=tostring(log.objectRef.namespace),
+            User=tostring(log.user.username), IsPrivileged, HostPaths
+entityMappings:
+  - entityType: AzureResource
+    fieldMappings:
+      - identifier: ResourceId
+        columnName: ResourceId
+  - entityType: Account
+    fieldMappings:
+      - identifier: Name
+        columnName: User
+incidentConfiguration:
+  createIncident: true

@@ -1,0 +1,93 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Microsoft Defender for Cloud — CWPP Overview\nDashboard for the MDC CWPP workshop. Tiles map directly to scenario IDs in the runbook (S-SRV-XX, S-K8S-XX, S-STO-XX, …)."
+      },
+      "name": "title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "tr",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "value": { "durationMs": 86400000 },
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 604800000 }
+              ]
+            }
+          }
+        ]
+      },
+      "name": "params"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| where ProviderName == \"Azure Security Center\"\n| summarize Count=count() by AlertSeverity\n| order by Count desc",
+        "size": 0,
+        "title": "Alerts by severity",
+        "visualization": "piechart"
+      },
+      "name": "sev-pie"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| where ProviderName == \"Azure Security Center\"\n| extend Plan = tostring(parse_json(ExtendedProperties).[\"Defender plan\"])\n| extend ResourceType = tostring(parse_json(ExtendedProperties).[\"Resource type\"])\n| summarize Count=count() by Plan, ResourceType\n| order by Count desc",
+        "size": 0,
+        "title": "Alerts by plan / resource type",
+        "visualization": "table"
+      },
+      "name": "by-plan"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| where ProviderName == \"Azure Security Center\"\n| summarize Count=count() by bin(TimeGenerated, 30m), AlertSeverity\n| render timechart",
+        "size": 0,
+        "title": "Alerts over time",
+        "visualization": "timechart"
+      },
+      "name": "timechart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| where ProviderName == \"Azure Security Center\"\n| project TimeGenerated, AlertSeverity, AlertName, CompromisedEntity, Description, ResourceId=tostring(parse_json(Entities)[0].ResourceId)\n| order by TimeGenerated desc\n| take 200",
+        "size": 0,
+        "title": "Most recent alerts",
+        "visualization": "table"
+      },
+      "name": "recent"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| where ProviderName == \"Azure Security Center\"\n| mv-expand Tactics=parse_json(Tactics)\n| extend Tactic=tostring(Tactics)\n| summarize Count=count() by Tactic\n| order by Count desc",
+        "size": 0,
+        "title": "MITRE tactics observed",
+        "visualization": "barchart"
+      },
+      "name": "mitre"
+    }
+  ],
+  "styleSettings": {},
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

@@ -1,0 +1,37 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e11
+kind: Scheduled
+name: API — BOLA / object-ID enumeration
+description: Single client iterating sequential object IDs against an API endpoint (BOLA / IDOR pattern).
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureApiManagement
+    dataTypes:
+      - ApiManagementGatewayLogs
+queryFrequency: 15m
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - Discovery
+  - InitialAccess
+relevantTechniques:
+  - T1087
+  - T1078
+query: |
+  ApiManagementGatewayLogs
+  | where TimeGenerated > ago(1h)
+  | where Url matches regex @"/\d+(/|$|\?)"
+  | extend Path = tostring(parse_url(Url).Path)
+  | extend BasePath = replace_regex(Path, @"/\d+", "/{id}")
+  | summarize HitsPerId=dcount(Path), TotalCalls=count(),
+              StatusCodes=make_set(BackendResponseCode, 10), Methods=make_set(Method)
+            by ClientIp, BasePath, OperationId
+  | where HitsPerId > 50
+entityMappings:
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: ClientIp
+incidentConfiguration:
+  createIncident: true

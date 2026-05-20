@@ -1,0 +1,50 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e06
+kind: Scheduled
+name: Storage — Access from Tor exit node or anonymous mass-read
+description: Storage diagnostic logs showing anonymous successful access OR access from Tor/TI IPs. Correlate with MDC Storage alerts.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureStorage
+    dataTypes:
+      - StorageBlobLogs
+  - connectorId: ThreatIntelligence
+    dataTypes:
+      - ThreatIntelligenceIndicator
+queryFrequency: 15m
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - InitialAccess
+  - Discovery
+relevantTechniques:
+  - T1078
+  - T1530
+  - T1090.003
+query: |
+  let ti =
+      ThreatIntelligenceIndicator
+      | where TimeGenerated > ago(14d)
+      | where ExpirationDateTime > now()
+      | where Active == true and isnotempty(NetworkIP)
+      | distinct NetworkIP;
+  StorageBlobLogs
+  | where TimeGenerated > ago(1h)
+  | extend Anon = AuthenticationType == "Anonymous"
+  | extend SuspiciousIP = CallerIpAddress in (ti)
+  | where Anon == true or SuspiciousIP == true
+  | summarize Count=count(), Ops=make_set(OperationName, 10), Files=make_set(Uri, 10)
+            by AccountName, CallerIpAddress, AuthenticationType, Anon, SuspiciousIP
+  | where Count > 5 or SuspiciousIP == true
+entityMappings:
+  - entityType: AzureResource
+    fieldMappings:
+      - identifier: ResourceId
+        columnName: AccountName
+  - entityType: IP
+    fieldMappings:
+      - identifier: Address
+        columnName: CallerIpAddress
+incidentConfiguration:
+  createIncident: true

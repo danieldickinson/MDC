@@ -1,0 +1,149 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "title": "MDC CWPP Foundation",
+    "description": "Subscription-scope ARM template that enables all 13 Defender for Cloud CWPP plans, creates a Log Analytics workspace, onboards Sentinel, and wires the MDC connector. Portal-deployable (no Bicep CLI needed)."
+  },
+  "parameters": {
+    "envTag": { "type": "string", "defaultValue": "pc" },
+    "location": { "type": "string", "defaultValue": "westeurope" },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[concat('law-mdc-', parameters('envTag'), '-', uniqueString(subscription().id))]"
+    },
+    "edgeResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[concat('rg-mdc-', parameters('envTag'), '-edge')]"
+    }
+  },
+  "variables": {
+    "plans": [
+      { "name": "VirtualMachines",                 "subPlan": "P2" },
+      { "name": "Containers",                      "subPlan": "" },
+      { "name": "StorageAccounts",                 "subPlan": "DefenderForStorageV2" },
+      { "name": "SqlServers",                      "subPlan": "" },
+      { "name": "SqlServerVirtualMachines",        "subPlan": "" },
+      { "name": "AppServices",                     "subPlan": "" },
+      { "name": "KeyVaults",                       "subPlan": "PerKeyVault" },
+      { "name": "Arm",                             "subPlan": "PerSubscription" },
+      { "name": "Dns",                             "subPlan": "" },
+      { "name": "OpenSourceRelationalDatabases",   "subPlan": "" },
+      { "name": "CosmosDbs",                       "subPlan": "" },
+      { "name": "Api",                             "subPlan": "P1" },
+      { "name": "AI",                              "subPlan": "" }
+    ],
+    "tags": {
+      "env": "poc-mdc",
+      "workshop": "cwpp-simulation"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('edgeResourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "edge-monitoring",
+      "resourceGroup": "[parameters('edgeResourceGroupName')]",
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('edgeResourceGroupName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "workspaceName": { "type": "string" },
+            "location":      { "type": "string" },
+            "tags":          { "type": "object" }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": { "name": "PerGB2018" },
+                "retentionInDays": 30
+              }
+            },
+            {
+              "type": "Microsoft.OperationsManagement/solutions",
+              "apiVersion": "2015-11-01-preview",
+              "name": "[concat('SecurityInsights(', parameters('workspaceName'), ')')]",
+              "location": "[parameters('location')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              ],
+              "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+              },
+              "plan": {
+                "name": "[concat('SecurityInsights(', parameters('workspaceName'), ')')]",
+                "publisher": "Microsoft",
+                "product": "OMSGallery/SecurityInsights",
+                "promotionCode": ""
+              }
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+            }
+          }
+        },
+        "parameters": {
+          "workspaceName": { "value": "[parameters('workspaceName')]" },
+          "location":      { "value": "[parameters('location')]" },
+          "tags":          { "value": "[variables('tags')]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('plans')[copyIndex()].name]",
+      "properties": {
+        "pricingTier": "Standard",
+        "subPlan": "[if(empty(variables('plans')[copyIndex()].subPlan), json('null'), variables('plans')[copyIndex()].subPlan)]"
+      },
+      "copy": {
+        "name": "pricingLoop",
+        "count": "[length(variables('plans'))]",
+        "mode": "Serial"
+      }
+    },
+    {
+      "type": "Microsoft.Security/workspaceSettings",
+      "apiVersion": "2017-08-01-preview",
+      "name": "default",
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/deployments', 'edge-monitoring')]"
+      ],
+      "properties": {
+        "workspaceId": "[reference('edge-monitoring').outputs.workspaceId.value]",
+        "scope": "[subscription().id]"
+      }
+    },
+    {
+      "type": "Microsoft.Security/autoProvisioningSettings",
+      "apiVersion": "2017-08-01-preview",
+      "name": "default",
+      "properties": { "autoProvision": "On" }
+    }
+  ],
+  "outputs": {
+    "workspaceName": { "type": "string", "value": "[parameters('workspaceName')]" },
+    "edgeResourceGroup": { "type": "string", "value": "[parameters('edgeResourceGroupName')]" }
+  }
+}

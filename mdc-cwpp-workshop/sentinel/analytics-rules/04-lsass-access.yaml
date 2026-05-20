@@ -1,0 +1,43 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e04
+kind: Scheduled
+name: LSASS memory access (credential dumping)
+description: Process opening LSASS with VM_READ rights — Mimikatz / ProcDump style credential dumping.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: MicrosoftThreatProtection
+    dataTypes:
+      - DeviceProcessEvents
+      - DeviceEvents
+queryFrequency: 10m
+queryPeriod: 30m
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - CredentialAccess
+relevantTechniques:
+  - T1003.001
+query: |
+  union isfuzzy=true
+    (DeviceProcessEvents
+      | where Timestamp > ago(30m)
+      | where ProcessCommandLine has_any ("lsass", "lsass.dmp", "sekurlsa", "mimikatz", "procdump")
+      | project Timestamp, DeviceName, AccountName, ProcessCommandLine, FileName),
+    (DeviceEvents
+      | where Timestamp > ago(30m)
+      | where ActionType in ("OpenProcessApiCall", "ReadProcessMemoryApiCall")
+      | where InitiatingProcessCommandLine has "lsass"
+      | project Timestamp, DeviceName, AccountName=InitiatingProcessAccountName,
+                ProcessCommandLine=InitiatingProcessCommandLine, FileName=InitiatingProcessFileName)
+  | summarize Count=count(), Samples=make_set(ProcessCommandLine, 5) by DeviceName, AccountName
+entityMappings:
+  - entityType: Host
+    fieldMappings:
+      - identifier: HostName
+        columnName: DeviceName
+  - entityType: Account
+    fieldMappings:
+      - identifier: Name
+        columnName: AccountName
+incidentConfiguration:
+  createIncident: true

@@ -1,0 +1,37 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e10
+kind: Scheduled
+name: DNS — Tunneling or DGA pattern
+description: DNS query bursts of long, random, or high-NXDOMAIN names from a single host.
+severity: Medium
+status: Available
+requiredDataConnectors:
+  - connectorId: MicrosoftThreatProtection
+    dataTypes:
+      - DeviceNetworkEvents
+queryFrequency: 15m
+queryPeriod: 1h
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - Exfiltration
+  - CommandAndControl
+relevantTechniques:
+  - T1048
+  - T1568
+query: |
+  DeviceNetworkEvents
+  | where Timestamp > ago(1h)
+  | where ActionType == "DnsQueryResponse" or RemotePort == 53
+  | extend Domain = tolower(RemoteUrl)
+  | where strlen(Domain) > 30
+       or Domain matches regex @"^[a-z0-9]{16,}\."
+  | summarize Queries=count(), UniqueDomains=dcount(Domain), Samples=make_set(Domain, 10)
+            by DeviceName, bin(Timestamp, 10m)
+  | where Queries > 30 or UniqueDomains > 20
+entityMappings:
+  - entityType: Host
+    fieldMappings:
+      - identifier: HostName
+        columnName: DeviceName
+incidentConfiguration:
+  createIncident: true

@@ -1,0 +1,44 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e03
+kind: Scheduled
+name: Suspicious PowerShell on protected VM
+description: Encoded PowerShell command lines or download-cradle patterns on Defender-for-Servers protected hosts.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: MicrosoftThreatProtection
+    dataTypes:
+      - DeviceProcessEvents
+queryFrequency: 10m
+queryPeriod: 30m
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - Execution
+  - DefenseEvasion
+relevantTechniques:
+  - T1059.001
+  - T1027
+query: |
+  DeviceProcessEvents
+  | where Timestamp > ago(30m)
+  | where InitiatingProcessFileName =~ "powershell.exe" or FileName =~ "powershell.exe"
+  | where ProcessCommandLine has_any ("-enc ", "-EncodedCommand", "FromBase64String", "IEX (New-Object Net.WebClient).DownloadString", "DownloadFile", "Invoke-Expression")
+  | summarize Count=count(), Commands=make_set(ProcessCommandLine, 5)
+            by DeviceName, AccountName, bin(Timestamp, 5m)
+  | where Count > 0
+entityMappings:
+  - entityType: Host
+    fieldMappings:
+      - identifier: HostName
+        columnName: DeviceName
+  - entityType: Account
+    fieldMappings:
+      - identifier: Name
+        columnName: AccountName
+incidentConfiguration:
+  createIncident: true
+  groupingConfiguration:
+    enabled: true
+    matchingMethod: Selected
+    groupByEntities:
+      - Host

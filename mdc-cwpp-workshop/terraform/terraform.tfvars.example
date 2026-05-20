@@ -1,0 +1,12 @@
+env_tag             = "pc"
+location            = "westeurope"
+admin_username      = "mdcadmin"
+admin_password      = "REPLACE-WITH-SECURE-VALUE-12CharsMin!"
+allowed_source_cidr = "203.0.113.42/32"
+
+tags = {
+  env      = "poc-mdc"
+  workshop = "cwpp-simulation"
+  owner    = "you@contoso.com"
+  expires  = "2026-06-30"
+}

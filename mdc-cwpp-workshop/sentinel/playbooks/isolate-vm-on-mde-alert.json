@@ -1,0 +1,95 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "title": "MDC CWPP — Auto-isolate VM on MDE malware alert",
+    "description": "Calls the Defender for Endpoint isolateMachine API when a Sentinel incident contains a Host entity. Sentinel-managed identity must have 'Machine.Isolate' permission in MDE.",
+    "warning": "Isolation cuts the VM off from the network. Use carefully — recommended only for tagged 'auto-isolate=true' VMs."
+  },
+  "parameters": {
+    "PlaybookName": { "type": "string", "defaultValue": "cwpp-isolate-vm" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('PlaybookName')]",
+      "location": "[resourceGroup().location]",
+      "identity": { "type": "SystemAssigned" },
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "triggers": {
+            "Sentinel_incident": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "object": {
+                      "type": "object",
+                      "properties": {
+                        "properties": {
+                          "type": "object",
+                          "properties": {
+                            "severity": { "type": "string" },
+                            "title":    { "type": "string" }
+                          }
+                        }
+                      }
+                    },
+                    "entities": { "type": "array" }
+                  }
+                }
+              }
+            }
+          },
+          "actions": {
+            "Get_AAD_token": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://login.microsoftonline.com/@{parameters('tenantId')}/oauth2/v2.0/token",
+                "headers": { "Content-Type": "application/x-www-form-urlencoded" },
+                "body": "grant_type=client_credentials&scope=https://api.securitycenter.microsoft.com/.default"
+              }
+            },
+            "Filter_Host_entities": {
+              "type": "Query",
+              "runAfter": { "Get_AAD_token": [ "Succeeded" ] },
+              "inputs": {
+                "from": "@triggerBody()?['entities']",
+                "where": "@equals(item()?['kind'], 'Host')"
+              }
+            },
+            "For_each_host": {
+              "type": "Foreach",
+              "runAfter": { "Filter_Host_entities": [ "Succeeded" ] },
+              "foreach": "@body('Filter_Host_entities')",
+              "actions": {
+                "Isolate_machine": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "POST",
+                    "uri": "https://api.securitycenter.microsoft.com/api/machines/@{items('For_each_host')?['properties']?['hostName']}/isolate",
+                    "headers": {
+                      "Authorization": "Bearer @{body('Get_AAD_token')?['access_token']}",
+                      "Content-Type": "application/json"
+                    },
+                    "body": {
+                      "Comment": "Auto-isolated by Sentinel playbook for incident @{triggerBody()?['object']?['properties']?['title']}",
+                      "IsolationType": "Full"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

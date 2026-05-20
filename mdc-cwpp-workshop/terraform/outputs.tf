@@ -1,0 +1,14 @@
+output "workspace_id"          { value = module.monitoring.workspace_id }
+output "workspace_name"        { value = module.monitoring.workspace_name }
+output "storage_account_name"  { value = module.storage.storage_account_name }
+output "sql_server_fqdn"       { value = module.sql.server_fqdn }
+output "app_service_url"       { value = module.appservice.app_url }
+output "key_vault_name"        { value = module.keyvault.vault_name }
+output "aks_cluster_name"      { value = module.containers.cluster_name }
+output "apim_gateway_url"      { value = module.apim.gateway_url }
+output "openai_endpoint"       { value = module.openai.endpoint }
+output "postgres_fqdn"         { value = module.databases.postgres_fqdn }
+output "mysql_fqdn"            { value = module.databases.mysql_fqdn }
+output "cosmos_endpoint"       { value = module.databases.cosmos_endpoint }
+output "windows_public_ip"     { value = module.servers.windows_public_ip }
+output "linux_public_ip"       { value = module.servers.linux_public_ip }

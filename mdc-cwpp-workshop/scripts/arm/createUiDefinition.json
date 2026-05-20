@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": false,
+      "basics": {
+        "description": "Foundation deployment for the MDC CWPP workshop: enables all 13 Defender for Cloud CWPP plans, creates a Log Analytics workspace, onboards Sentinel, and wires the MDC connector."
+      }
+    },
+    "basics": [
+      {
+        "name": "envTag",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Env tag (2 letters)",
+        "defaultValue": "pc",
+        "toolTip": "Used as a short suffix in resource names (e.g. 'pc' → law-mdc-pc-xxxx)",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z]{2}$",
+          "validationMessage": "Two lowercase letters."
+        }
+      }
+    ],
+    "steps": [],
+    "outputs": {
+      "envTag":   "[basics('envTag')]",
+      "location": "[location()]"
+    }
+  }
+}

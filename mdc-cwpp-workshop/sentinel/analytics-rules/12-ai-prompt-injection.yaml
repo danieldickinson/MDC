@@ -1,0 +1,39 @@
+id: 7a9a3f9c-8c40-4e9f-9b3d-1a2b3c4d5e12
+kind: Scheduled
+name: AI — Prompt injection / jailbreak attempt
+description: Defender for AI alerts correlating with high content-safety severity in Azure OpenAI logs.
+severity: High
+status: Available
+requiredDataConnectors:
+  - connectorId: AzureSecurityCenter
+    dataTypes:
+      - SecurityAlert
+queryFrequency: 10m
+queryPeriod: 30m
+triggerOperator: gt
+triggerThreshold: 0
+tactics:
+  - InitialAccess
+  - DefenseEvasion
+relevantTechniques:
+  - T1190
+  - T1562
+query: |
+  SecurityAlert
+  | where TimeGenerated > ago(30m)
+  | where ProductName has_any ("Defender for AI", "AI Services", "Azure OpenAI")
+       or AlertName has_any ("prompt injection", "jailbreak", "obfuscated prompt", "harmful content", "sensitive data in prompt")
+  | extend Identity = tostring(parse_json(ExtendedProperties).["Caller principal"])
+  | project TimeGenerated, AlertName, AlertSeverity, ResourceId=CompromisedEntity,
+            Identity, Description, ExtendedLinks
+entityMappings:
+  - entityType: AzureResource
+    fieldMappings:
+      - identifier: ResourceId
+        columnName: ResourceId
+  - entityType: Account
+    fieldMappings:
+      - identifier: Name
+        columnName: Identity
+incidentConfiguration:
+  createIncident: true
