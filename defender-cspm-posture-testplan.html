@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microsoft Defender for Cloud &mdash; CSPM Capability Test Plan</title>
+<style>
+:root{
+  --bg:#0e1217; --panel:#161c24; --panel2:#1d2530; --panel3:#252f3d;
+  --line:#2c3744; --line2:#3a4756;
+  --text:#e6edf3; --muted:#93a1b3; --muted2:#6b7888;
+  --accent:#3b9dff; --accent2:#4cc2ff;
+  --high:#f85149; --medium:#f0a020; --low:#3b9dff; --info:#8b98a8;
+  --misconfig:#f0a020; --capability:#4cc2ff; --validation:#2dd4bf;
+  --pass:#3fb950; --fail:#f85149; --notrun:#5a6675;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;
+}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+a{color:var(--accent2)}
+.app{display:flex;min-height:100vh}
+
+.sidebar{
+  width:268px;flex:0 0 268px;background:var(--panel);border-right:1px solid var(--line);
+  position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px;
+}
+.brand{font-weight:700;font-size:15px;letter-spacing:.2px;margin-bottom:2px}
+.brand span{color:var(--accent2)}
+.brand-sub{color:var(--muted2);font-size:11.5px;margin-bottom:16px}
+.nav-progress{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 11px;margin-bottom:14px}
+.nav-progress .pct{font-size:20px;font-weight:700}
+.nav-progress .lbl{font-size:11px;color:var(--muted)}
+.pbar{height:6px;background:var(--panel3);border-radius:4px;overflow:hidden;margin-top:7px;display:flex}
+.pbar i{display:block;height:100%}
+.pbar .p{background:var(--pass)}
+.pbar .f{background:var(--fail)}
+.nav-sect{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin:14px 6px 6px}
+.nav a{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;
+  color:var(--text);text-decoration:none;font-size:13px;cursor:pointer;
+}
+.nav a:hover{background:var(--panel2)}
+.nav a .ico{width:18px;text-align:center;opacity:.85}
+.nav a .ct{margin-left:auto;font-size:10.5px;color:var(--muted2);background:var(--panel3);
+  padding:1px 7px;border-radius:10px;min-width:30px;text-align:center}
+.nav a.done .ct{background:rgba(63,185,80,.18);color:var(--pass)}
+
+.content{flex:1;min-width:0;padding:26px 34px 90px;max-width:1180px}
+header.top h1{font-size:22px;font-weight:700;letter-spacing:.2px}
+header.top .tagline{color:var(--muted);margin-top:4px;font-size:13px}
+.meta-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.meta-row b{color:var(--text);font-weight:600}
+
+.toolbar{
+  position:sticky;top:0;z-index:20;background:rgba(14,18,23,.95);backdrop-filter:blur(6px);
+  border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:20px 0 24px;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+}
+.toolbar input.search{
+  flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line2);color:var(--text);
+  padding:8px 11px;border-radius:7px;font-size:13px;
+}
+.toolbar input.search:focus{outline:none;border-color:var(--accent)}
+.fgroup{display:flex;gap:5px;flex-wrap:wrap}
+.chip{
+  background:var(--panel2);border:1px solid var(--line2);color:var(--muted);
+  padding:5px 10px;border-radius:20px;font-size:11.5px;cursor:pointer;user-select:none;
+}
+.chip:hover{color:var(--text)}
+.chip.on{color:#fff;border-color:transparent}
+.chip.on[data-sev="High"]{background:var(--high)}
+.chip.on[data-sev="Medium"]{background:var(--medium);color:#1a1a1a}
+.chip.on[data-sev="Low"]{background:var(--low)}
+.chip.on[data-sev="Informational"]{background:var(--info);color:#1a1a1a}
+.chip.on[data-type="Misconfiguration"]{background:var(--misconfig);color:#1a1a1a}
+.chip.on[data-type="Capability"]{background:var(--capability);color:#06202e}
+.chip.on[data-type="Validation"]{background:var(--validation);color:#06201c}
+.chip.on[data-status]{background:var(--accent)}
+.btn{
+  background:var(--panel3);border:1px solid var(--line2);color:var(--text);
+  padding:7px 12px;border-radius:7px;font-size:12px;cursor:pointer;
+}
+.btn:hover{border-color:var(--accent)}
+.spacer{flex:1}
+
+.section{margin-bottom:34px;scroll-margin-top:84px}
+.section-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.section-head .emoji{font-size:24px;line-height:1}
+.section-head h2{font-size:19px;font-weight:700}
+.section-head .plan{font-size:11.5px;color:var(--muted2);margin-top:2px}
+.section-desc{color:var(--muted);font-size:13px;margin:8px 0 14px;max-width:900px}
+.wl-prereq{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 15px;margin-bottom:16px}
+.wl-prereq h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent2);margin-bottom:7px}
+.wl-prereq ul{margin-left:18px}
+.wl-prereq li{margin:3px 0;font-size:12.5px;color:var(--muted)}
+
+.gs h3{font-size:15px;margin:18px 0 8px;color:var(--text)}
+.gs p{margin:8px 0;color:var(--muted)}
+.gs ul,.gs ol{margin:8px 0 8px 22px}
+.gs li{margin:4px 0;color:var(--muted)}
+.gs strong{color:var(--text)}
+.note{border-radius:8px;padding:10px 13px;margin:10px 0;font-size:12.5px;border:1px solid}
+.note-info{background:rgba(59,157,255,.08);border-color:rgba(59,157,255,.35);color:#bcd9f5}
+.note-tip{background:rgba(63,185,80,.08);border-color:rgba(63,185,80,.35);color:#b6e6bf}
+.note-warn{background:rgba(248,81,73,.09);border-color:rgba(248,81,73,.4);color:#f3b6b3}
+table.tbl{border-collapse:collapse;width:100%;margin:10px 0;font-size:12px}
+table.tbl th,table.tbl td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+table.tbl th{background:var(--panel2);color:var(--accent2);font-weight:600}
+table.tbl td{color:var(--muted)}
+
+.cb{position:relative;margin:8px 0}
+.cb pre{background:#0a0d12;border:1px solid var(--line);border-radius:7px;padding:11px 13px;
+  overflow-x:auto;font-size:12px;line-height:1.5}
+.cb code{color:#cfe3f5;white-space:pre}
+.cb .copy{position:absolute;top:6px;right:6px;background:var(--panel3);border:1px solid var(--line2);
+  color:var(--muted);font-size:10.5px;padding:3px 8px;border-radius:5px;cursor:pointer}
+.cb .copy:hover{color:var(--text);border-color:var(--accent)}
+.cb .copy.ok{color:var(--pass);border-color:var(--pass)}
+code.ic{background:var(--panel3);padding:1px 5px;border-radius:4px;font-size:11.5px;color:#cfe3f5}
+
+.scenario{background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-bottom:9px;overflow:hidden}
+.scenario.hidden{display:none}
+.sc-head{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer}
+.sc-head:hover{background:var(--panel2)}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;background:var(--notrun)}
+.dot.pass{background:var(--pass)}
+.dot.fail{background:var(--fail)}
+.sc-id{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted2);flex:0 0 62px}
+.sc-title{font-weight:600;font-size:13.5px;flex:1;min-width:0}
+.badges{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.badge{font-size:10px;padding:2px 8px;border-radius:11px;font-weight:600;white-space:nowrap}
+.b-sev[data-v="High"]{background:rgba(248,81,73,.16);color:var(--high)}
+.b-sev[data-v="Medium"]{background:rgba(240,160,32,.16);color:var(--medium)}
+.b-sev[data-v="Low"]{background:rgba(59,157,255,.16);color:var(--low)}
+.b-sev[data-v="Informational"]{background:rgba(139,152,168,.18);color:var(--info)}
+.b-type[data-v="Misconfiguration"]{background:rgba(240,160,32,.16);color:var(--misconfig)}
+.b-type[data-v="Capability"]{background:rgba(76,194,255,.16);color:var(--capability)}
+.b-type[data-v="Validation"]{background:rgba(45,212,191,.15);color:var(--validation)}
+.b-cap{background:var(--panel3);color:var(--muted)}
+.chev{color:var(--muted2);font-size:11px;transition:transform .15s;flex:0 0 14px}
+.scenario.open .chev{transform:rotate(90deg)}
+.sc-body{display:none;padding:4px 16px 16px;border-top:1px solid var(--line)}
+.scenario.open .sc-body{display:block}
+.alert-line{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;
+  padding:9px 12px;margin:13px 0;font-size:12.5px}
+.alert-line .k{color:var(--muted2);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px}
+.alert-line .v{color:var(--accent2);font-weight:600;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.sc-body h5{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);
+  margin:15px 0 5px}
+.sc-body p.d{color:var(--muted);font-size:13px;margin:4px 0}
+.sc-body ul.pre{margin-left:19px}
+.sc-body ul.pre li{font-size:12.5px;color:var(--muted);margin:3px 0}
+ol.steps{margin-left:20px}
+ol.steps li{margin:8px 0;font-size:13px;color:var(--text)}
+ol.steps li .stext{color:var(--text)}
+.expected{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.3);border-radius:7px;
+  padding:9px 12px;font-size:12.5px;color:#bfe6c6;margin-top:6px}
+.cleanup{background:rgba(240,160,32,.06);border:1px solid rgba(240,160,32,.28);border-radius:7px;
+  padding:9px 12px;font-size:12.5px;color:#eccfa0;margin-top:8px}
+.sc-foot{display:flex;align-items:center;gap:8px;margin-top:15px;flex-wrap:wrap}
+.statusbtn{background:var(--panel2);border:1px solid var(--line2);color:var(--muted);
+  padding:6px 13px;border-radius:6px;font-size:11.5px;cursor:pointer}
+.statusbtn:hover{color:var(--text)}
+.statusbtn.sel[data-s="pass"]{background:var(--pass);border-color:var(--pass);color:#06200b}
+.statusbtn.sel[data-s="fail"]{background:var(--fail);border-color:var(--fail);color:#fff}
+.statusbtn.sel[data-s="notrun"]{background:var(--notrun);border-color:var(--notrun);color:#fff}
+.sc-notes{flex:1;min-width:220px;background:var(--panel2);border:1px solid var(--line2);
+  color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;resize:vertical}
+.sc-notes:focus{outline:none;border-color:var(--accent)}
+footer.foot{color:var(--muted2);font-size:11.5px;border-top:1px solid var(--line);
+  margin-top:30px;padding-top:16px}
+
+@media (max-width:860px){
+  .sidebar{display:none}
+  .content{padding:18px}
+}
+@media print{
+  .sidebar,.toolbar{display:none}
+  .content{max-width:none}
+  .scenario .sc-body{display:block!important}
+  .scenario{break-inside:avoid;border-color:#bbb}
+  body{background:#fff;color:#111}
+  .cb pre{background:#f4f4f4}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span>Defender for Cloud</span> &middot; CSPM</div>
+    <div class="brand-sub">Posture Capability Test Plan &mdash; PoC</div>
+    <div class="nav-progress">
+      <div class="pct" id="navPct">0%</div>
+      <div class="lbl"><span id="navDone">0</span> of <span id="navTotal">50</span> tests run</div>
+      <div class="pbar"><i class="p" id="navP" style="width:0"></i><i class="f" id="navF" style="width:0"></i></div>
+    </div>
+    <div class="nav" id="nav"></div>
+  </aside>
+  <main class="content">
+    <header class="top">
+      <h1>Microsoft Defender for Cloud &mdash; CSPM Capability Test Plan</h1>
+      <div class="tagline">A proof-of-concept playbook to validate Cloud Security Posture Management capabilities &mdash; 50 tests across 9 capability areas.</div>
+      <div class="meta-row">
+        <span><b>50</b> tests</span>
+        <span><b>9</b> capability areas</span>
+        <span>Test types: <b>Misconfiguration</b> &middot; <b>Capability</b> &middot; <b>Validation</b></span>
+        <span>Progress is saved in this browser (localStorage).</span>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="Search tests, recommendations, capabilities&hellip;">
+      <div class="fgroup" id="sevFilters">
+        <span class="chip" data-sev="High">High</span>
+        <span class="chip" data-sev="Medium">Medium</span>
+        <span class="chip" data-sev="Low">Low</span>
+        <span class="chip" data-sev="Informational">Info</span>
+      </div>
+      <div class="fgroup" id="typeFilters">
+        <span class="chip" data-type="Misconfiguration">Misconfiguration</span>
+        <span class="chip" data-type="Capability">Capability</span>
+        <span class="chip" data-type="Validation">Validation</span>
+      </div>
+      <div class="fgroup" id="statusFilters">
+        <span class="chip" data-status="notrun">Not run</span>
+        <span class="chip" data-status="pass">Passed</span>
+        <span class="chip" data-status="fail">Failed</span>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="expandAll">Expand all</button>
+      <button class="btn" id="collapseAll">Collapse all</button>
+      <button class="btn" id="exportBtn">Export CSV</button>
+      <button class="btn" id="printBtn">Print / PDF</button>
+      <button class="btn" id="resetBtn">Reset</button>
+    </div>
+
+    <div id="sections"></div>
+
+    <footer class="foot">
+      Generated for an internal Microsoft Defender for Cloud Proof-of-Concept. Recommendation display names,
+      severities and capability behavior are based on Microsoft Learn documentation and may change &mdash; always
+      confirm against the <b>Recommendations</b> and <b>Environment settings</b> pages in your own tenant. Run all
+      tests only in an isolated, authorized PoC subscription.
+    </footer>
+  </main>
+</div>
+
+<script>
+/* =================================================================
+   DATA
+   ================================================================= */
+
+const GS = [
+{id:"gs-overview",icon:"📘",title:"How to use this test plan",blocks:[
+  {t:"p",x:"This playbook helps you systematically validate **Cloud Security Posture Management (CSPM)** capabilities in Microsoft Defender for Cloud. Unlike threat alerts, CSPM is about posture: misconfigurations, recommendations, Secure Score, attack paths, compliance and identity/data risk. Work through **Getting Started** first, then run the 50 tests and record a Pass/Fail result on each card."},
+  {t:"h",x:"Test types"},
+  {t:"ul",x:[
+   "**Misconfiguration** &mdash; you deliberately create a non-compliant resource, then verify the matching recommendation or finding appears.",
+   "**Capability** &mdash; you exercise a CSPM feature (attack path analysis, cloud security explorer, risk prioritization, inventory) and confirm it behaves as expected.",
+   "**Validation** &mdash; you verify a configuration or integration is healthy (plan enabled, component on, compliance standard added, connector connected, export working)."
+  ]},
+  {t:"h",x:"Timing &mdash; CSPM is not real-time"},
+  {t:"ul",x:[
+   "Security **recommendations** are assessed continuously but can take a few hours to first appear or clear.",
+   "**Secure Score** recalculates roughly every 8 hours per subscription.",
+   "**Agentless scans** (VM vulnerabilities/secrets, container images, sensitive data) run about every 24 hours.",
+   "The **cloud security graph** that powers attack paths and cloud security explorer refreshes on a daily snapshot.",
+   "Plan ~24-48 hours of soak time before expecting agentless / attack-path results."
+  ]},
+  {t:"h",x:"Safety &amp; scope rules"},
+  {t:"ul",x:[
+   "Run **only** in a dedicated, isolated PoC subscription &mdash; never weaken posture on production resources.",
+   "Misconfiguration tests deliberately create insecure resources; always complete the **Cleanup** step to restore a secure state.",
+   "Use only **synthetic** sensitive data (fake SSNs / card numbers) for data-discovery tests &mdash; never real PII.",
+   "Obtain authorization before testing in any shared environment."
+  ]},
+  {t:"note",v:"warn",x:"Misconfiguration tests intentionally lower security posture (public storage, open ports, disabled encryption). They are safe on disposable PoC resources but must never be run against production."},
+  {t:"note",v:"info",x:"This file stores Pass/Fail results and notes in the browser's localStorage. Use **Export CSV** for your PoC report; **Reset** clears all progress."}
+]},
+{id:"gs-environment",icon:"🏗️",title:"Build the PoC environment",blocks:[
+  {t:"p",x:"Stand up an isolated subscription, a resource group, and enable the **Defender CSPM** plan. Defender CSPM is the paid plan that unlocks attack path analysis, cloud security explorer, agentless scanning, CIEM and data-aware posture."},
+  {t:"ol",x:[
+   "Identify or create a **dedicated PoC subscription** with no production workloads.",
+   "Create a resource group for all test assets.",
+   "Enable the **Defender CSPM** plan at subscription scope.",
+   "Turn on the CSPM **components** (agentless scanning, container posture, sensitive data discovery, CIEM).",
+   "Deploy a small set of test resources: a couple of VMs, a storage account, a SQL database, a Key Vault, a web app, an AKS cluster and a container registry."
+  ]},
+  {t:"code",x:"# Create the resource group used throughout this plan\naz group create --name DfC-CSPM-RG --location eastus\n\n# Enable the Defender CSPM plan (pricing resource name = CloudPosture)\naz security pricing create -n CloudPosture --tier Standard\n\n# Verify\naz security pricing show -n CloudPosture -o table"},
+  {t:"note",v:"info",x:"**Foundational CSPM** (asset inventory, Secure Score, recommendations, MCSB assessment) is free and on by default. The **Defender CSPM** plan ({{CloudPosture}} / tier {{Standard}}) is required for attack paths, cloud security explorer, agentless scanning, CIEM, data-aware posture, regulatory compliance assessments and governance rules."}
+]},
+{id:"gs-cli",icon:"⚙️",title:"Install &amp; configure Azure CLI",blocks:[
+  {t:"p",x:"Misconfiguration tests are driven from the Azure CLI. Install it, sign in, and select the PoC subscription."},
+  {t:"h",x:"1. Install the Azure CLI"},
+  {t:"code",x:"# macOS (Homebrew)\nbrew update && brew install azure-cli\n\n# Windows (winget) -- or the MSI at https://aka.ms/installazurecliwindows\nwinget install -e --id Microsoft.AzureCLI\n\n# Linux (Debian / Ubuntu)\ncurl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"},
+  {t:"h",x:"2. Sign in and select the PoC subscription"},
+  {t:"code",x:"az login                       # add --use-device-code on headless hosts\naz account set --subscription \"<PoC-subscription-name-or-id>\"\naz account show -o table"},
+  {t:"h",x:"3. Inspect Defender for Cloud from the CLI"},
+  {t:"code",x:"az security pricing list -o table              # all plan statuses\naz security secure-scores list -o table         # Secure Score\naz security task list -o table                  # recommendations (tasks)\naz security regulatory-compliance-standards list -o table"},
+  {t:"note",v:"info",x:"Requires **Azure CLI 2.50+** ({{az upgrade}} to update). Enabling Defender CSPM components (agentless scanning, sensitive data discovery, CIEM) is done in the **portal** Environment settings &mdash; the base {{az security pricing}} command does not toggle sub-components."}
+]},
+{id:"gs-components",icon:"🧩",title:"Turn on the CSPM components",blocks:[
+  {t:"p",x:"After enabling the Defender CSPM plan, switch on its components so the agentless and graph-based capabilities have data to work with."},
+  {t:"ol",x:[
+   "Open **Microsoft Defender for Cloud &rarr; Environment settings** and select the PoC subscription.",
+   "On the Defender plans page, confirm **Defender CSPM** is **On**.",
+   "Select **Settings** (or the Settings/monitoring link) next to Defender CSPM.",
+   "Turn on **Agentless scanning for machines** (VM vulnerabilities &amp; secrets).",
+   "Turn on **Agentless discovery for Kubernetes** and **Container registries vulnerability assessments**.",
+   "Turn on **Sensitive data discovery** (data-aware posture).",
+   "Turn on **Permissions Management (CIEM)**.",
+   "Select **Continue / Save**."
+  ]},
+  {t:"note",v:"warn",x:"Enabling agentless scanning requires the **Subscription Owner** role. Allow up to **24 hours** for the first agentless scan and sensitive-data discovery results to appear."},
+  {t:"note",v:"tip",x:"Malware detection in agentless scanning is **not** part of Defender CSPM &mdash; it requires Defender for Servers Plan 2. CSPM agentless scanning covers software inventory, vulnerabilities and secrets."}
+]},
+{id:"gs-tiers",icon:"📊",title:"Foundational vs Defender CSPM",blocks:[
+  {t:"p",x:"Use this table to confirm which capability each test depends on. Tests for paid capabilities will not produce results unless the Defender CSPM plan is enabled."},
+  {t:"table",head:["Capability","Foundational CSPM (free)","Defender CSPM (paid)"],rows:[
+   ["Asset inventory, Secure Score, recommendations","Yes","Yes"],
+   ["Microsoft Cloud Security Benchmark assessment","Yes","Yes"],
+   ["Data export, workbooks, workflow automation","Yes","Yes"],
+   ["Attack path analysis &amp; cloud security explorer","No","Yes"],
+   ["Agentless VM vulnerability &amp; secret scanning","No","Yes"],
+   ["Agentless container vulnerability assessment","No","Yes"],
+   ["Internet exposure analysis &amp; EASM integration","No","Yes"],
+   ["Regulatory compliance assessments","No","Yes"],
+   ["Governance rules &amp; risk prioritization","No","Yes"],
+   ["Data-aware security posture (DSPM)","No","Yes"],
+   ["Permissions Management (CIEM)","No","Yes"],
+   ["Custom (KQL-based) recommendations","No","Yes"]
+  ]}
+]},
+{id:"gs-verify",icon:"🔍",title:"Where to verify results",blocks:[
+  {t:"p",x:"After running a test, check the relevant area. Record what you observe in the test's Notes field."},
+  {t:"ul",x:[
+   "**Recommendations** &mdash; Defender for Cloud &rarr; Recommendations (filter by resource, severity, risk level).",
+   "**Secure Score** &mdash; the Overview dashboard and the Secure Score page.",
+   "**Attack path analysis** &mdash; Defender for Cloud &rarr; Attack path analysis.",
+   "**Cloud Security Explorer** &mdash; Defender for Cloud &rarr; Cloud Security Explorer.",
+   "**Regulatory compliance** &mdash; the Regulatory compliance dashboard.",
+   "**Inventory** &mdash; Defender for Cloud &rarr; Inventory (filter by resource type, recommendation, sensitivity label).",
+   "**Environment settings** &mdash; to confirm plans, components and connectors are healthy."
+  ]},
+  {t:"code",x:"# List current recommendations and Secure Score from the CLI\naz security task list -o table\naz security secure-scores list -o table\naz security secure-score-controls list -o table"},
+  {t:"note",v:"info",x:"Many posture results are produced on a daily cycle. If a test result is not visible immediately, re-check after the agentless scan / graph refresh window noted in the test card."}
+]}
+];
+
+/* ---- Category metadata ---- */
+const CATEGORIES = [
+ {key:"setup",icon:"🚀",name:"Onboarding & Plan Setup",short:"Onboarding",
+  cap:"Defender CSPM enablement",
+  desc:"Enable the Defender CSPM plan and its components so every other capability area has data to work with.",
+  prereqs:[
+   "A dedicated, isolated PoC subscription with the Subscription Owner role.",
+   "Azure CLI installed and signed in to the PoC subscription.",
+   "A resource group (DfC-CSPM-RG) for test assets.",
+   "Allow up to 24 hours after enabling components for the first agentless results."
+  ]},
+ {key:"recommendations",icon:"📊",name:"Secure Score & Recommendations",short:"Recommendations",
+  cap:"Recommendations & Secure Score",
+  desc:"Deliberately create non-compliant resources and confirm Defender for Cloud raises the matching security recommendations and reflects them in Secure Score.",
+  prereqs:[
+   "Foundational CSPM active (automatic) with the Microsoft Cloud Security Benchmark assigned.",
+   "Permission to create storage accounts, VMs, networking, Key Vault, SQL and App Service resources.",
+   "Recommendations can take a few hours to appear or clear; Secure Score recalculates roughly every 8 hours.",
+   "Complete each Cleanup step to restore a secure configuration."
+  ]},
+ {key:"compliance",icon:"📋",name:"Compliance & Security Standards",short:"Compliance",
+  cap:"Regulatory compliance",
+  desc:"Exercise the regulatory compliance dashboard, add standards, and build custom standards and recommendations.",
+  prereqs:[
+   "Defender CSPM enabled (regulatory compliance assessments require the paid plan).",
+   "Owner role to create custom standards; Security Admin to create custom recommendations.",
+   "Some test resources deployed so compliance controls have something to assess."
+  ]},
+ {key:"attackpath",icon:"🛤️",name:"Attack Path Analysis",short:"Attack Paths",
+  cap:"Attack path analysis",
+  desc:"Create realistic exposure combinations and confirm Defender for Cloud surfaces exploitable attack paths across the cloud security graph.",
+  prereqs:[
+   "Defender CSPM enabled with Agentless scanning for machines turned on.",
+   "Agentless discovery for Kubernetes enabled for container attack paths.",
+   "Test VMs, storage and (optionally) AKS deployed.",
+   "Attack paths are built from the daily cloud security graph snapshot -- allow ~24 hours."
+  ]},
+ {key:"explorer",icon:"🔎",name:"Cloud Security Explorer",short:"Security Explorer",
+  cap:"Cloud security explorer",
+  desc:"Use the security-graph query builder to proactively hunt for risk across misconfigurations, vulnerabilities, exposure, identities and data.",
+  prereqs:[
+   "Defender CSPM enabled; agentless scanning on so the graph is populated.",
+   "For container queries, enable K8S API access and registry access.",
+   "Best run after the agentless scans from the Setup and Agentless Scanning areas have completed."
+  ]},
+ {key:"vuln",icon:"🛰️",name:"Agentless Scanning & Vulnerability Assessment",short:"Agentless Scanning",
+  cap:"Agentless scanning",
+  desc:"Validate agentless discovery of vulnerabilities and secrets on VM disks, and vulnerability assessment of container images.",
+  prereqs:[
+   "Defender CSPM enabled with Agentless scanning for machines and container VA components on.",
+   "Test VMs, an Azure Container Registry and an AKS cluster deployed.",
+   "Agentless scans run about every 24 hours -- plan soak time accordingly."
+  ]},
+ {key:"dataidentity",icon:"🔐",name:"Data & Identity Posture",short:"Data & Identity",
+  cap:"DSPM & CIEM",
+  desc:"Validate data-aware security posture (sensitive data discovery) and CIEM (over-provisioned and inactive identity detection).",
+  prereqs:[
+   "Defender CSPM enabled with Sensitive data discovery and Permissions Management (CIEM) on.",
+   "A storage account and/or database for data tests; spare test identities for CIEM tests.",
+   "Use only synthetic sensitive data; first DSPM and CIEM results take up to 24 hours."
+  ]},
+ {key:"multicloud",icon:"☁️",name:"Multicloud & DevOps Posture",short:"Multicloud & DevOps",
+  cap:"Multicloud & DevOps connectors",
+  desc:"Extend CSPM beyond Azure by connecting AWS, GCP and DevOps environments, and confirm posture coverage flows in.",
+  prereqs:[
+   "Defender CSPM enabled in the PoC subscription.",
+   "Access to a test AWS account, a test GCP project and/or an Azure DevOps or GitHub organization.",
+   "Permissions to run the connector onboarding templates/scripts in the target cloud."
+  ]},
+ {key:"governance",icon:"🧭",name:"Governance, Automation & Operations",short:"Governance & Ops",
+  cap:"Governance & automation",
+  desc:"Validate the operational layer: governance rules, exemptions, asset inventory, continuous export and workflow automation.",
+  prereqs:[
+   "Defender CSPM enabled (governance rules require the paid plan).",
+   "Security Admin or Owner role; a Log Analytics workspace and a consumption Logic App for export/automation tests.",
+   "Some active recommendations present so rules, exemptions and automation have something to act on."
+  ]}
+];
+
+/* =================================================================
+   TESTS  (50 across 9 capability areas)
+   Field model: id,title,type,sev,cap,outcome,desc,prereq[],steps[[text,code]],expected,cleanup,note
+   ================================================================= */
+
+const SETUP_TESTS = [
+ {id:"SET-01",title:"Enable the Defender CSPM plan",type:"Validation",sev:"Informational",cap:"Plan setup",
+  outcome:"Defender CSPM shows tier 'Standard' / 'On'",
+  desc:"Enables the paid Defender CSPM plan, which unlocks attack paths, cloud security explorer, agentless scanning, CIEM and data-aware posture.",
+  prereq:["Subscription Owner role; Azure CLI signed in to the PoC subscription."],
+  steps:[
+   ["Enable the Defender CSPM plan from the CLI.","az security pricing create -n CloudPosture --tier Standard"],
+   ["Confirm the plan is enabled.","az security pricing show -n CloudPosture -o table"],
+   ["Cross-check in the portal: Environment settings > select subscription > confirm **Defender CSPM** is **On**.",""]
+  ],
+  expected:"The CloudPosture pricing resource shows tier 'Standard' and Defender CSPM is On in Environment settings.",
+  cleanup:"None (leave enabled for the rest of the plan)."},
+ {id:"SET-02",title:"Enable agentless scanning for machines",type:"Validation",sev:"Informational",cap:"Agentless scanning",
+  outcome:"Agentless scanning component shows 'On'",
+  desc:"Turns on agentless disk-snapshot scanning of VMs for software inventory, vulnerabilities and secrets.",
+  prereq:["Defender CSPM enabled (SET-01); Subscription Owner role."],
+  steps:[
+   ["Open Environment settings > select the subscription > **Settings** next to Defender CSPM.",""],
+   ["Turn on **Agentless scanning for machines** and select Save / Continue.",""],
+   ["Confirm the component reports as On.",""]
+  ],
+  expected:"Agentless scanning for machines is enabled; the first scan completes within ~24 hours.",
+  cleanup:"None."},
+ {id:"SET-03",title:"Enable agentless container posture",type:"Validation",sev:"Informational",cap:"Container posture",
+  outcome:"Container posture components show 'On'",
+  desc:"Turns on agentless Kubernetes discovery and container registry vulnerability assessment.",
+  prereq:["Defender CSPM enabled (SET-01)."],
+  steps:[
+   ["In Defender CSPM **Settings**, turn on **Agentless discovery for Kubernetes**.",""],
+   ["Turn on **Container registries vulnerability assessments** (registry access).",""],
+   ["Select Continue / Save.",""]
+  ],
+  expected:"Both container posture components report as On.",
+  cleanup:"None."},
+ {id:"SET-04",title:"Enable sensitive data discovery and CIEM",type:"Validation",sev:"Informational",cap:"DSPM & CIEM",
+  outcome:"Sensitive data discovery and CIEM show 'On'",
+  desc:"Turns on data-aware security posture and Permissions Management (CIEM).",
+  prereq:["Defender CSPM enabled (SET-01)."],
+  steps:[
+   ["In Defender CSPM **Settings**, turn on **Sensitive data discovery**.",""],
+   ["Turn on **Permissions Management (CIEM)**.",""],
+   ["Select Continue / Save.",""]
+  ],
+  expected:"Both components report as On; first results appear within ~24 hours.",
+  cleanup:"None."},
+ {id:"SET-05",title:"Confirm the cloud security graph is populated",type:"Validation",sev:"Informational",cap:"Cloud security graph",
+  outcome:"Cloud security explorer and attack path pages return data",
+  desc:"Verifies that, after the components are enabled and the first scans run, the cloud security graph has data behind attack paths and the explorer.",
+  prereq:["SET-01 to SET-04 completed; ~24 hours elapsed."],
+  steps:[
+   ["Open **Cloud Security Explorer** and run a simple query (e.g. all virtual machines) and Search.",""],
+   ["Open **Attack path analysis** and confirm the page loads with your environment's resources.",""],
+   ["Open **Inventory** and confirm resources are listed with recommendation counts.",""]
+  ],
+  expected:"Cloud security explorer returns resources and the attack path / inventory pages are populated.",
+  cleanup:"None."}
+];
+
+const REC_TESTS = [
+ {id:"REC-01",title:"Storage account allowing public blob access",type:"Misconfiguration",sev:"Medium",cap:"Recommendations",
+  outcome:"Storage account public access should be disallowed",
+  desc:"Creates a storage account that permits anonymous public blob access, which Defender for Cloud flags as a posture gap.",
+  prereq:["Permission to create storage accounts."],
+  steps:[
+   ["Create a storage account with public blob access allowed.","az storage account create --name dfccsppoc01 --resource-group DfC-CSPM-RG --location eastus --sku Standard_LRS --allow-blob-public-access true"]
+  ],
+  expected:"Within a few hours the 'Storage account public access should be disallowed' recommendation appears for the account.",
+  cleanup:"az storage account update --name dfccsppoc01 --resource-group DfC-CSPM-RG --allow-blob-public-access false"},
+ {id:"REC-02",title:"VM management ports open to the internet",type:"Misconfiguration",sev:"Medium",cap:"Recommendations",
+  outcome:"Management ports should be closed on your virtual machines",
+  desc:"Adds an NSG rule that allows inbound RDP and SSH from any source, a common high-risk misconfiguration.",
+  prereq:["A test VM with an associated network security group."],
+  steps:[
+   ["Add a permissive inbound rule for the management ports.","az network nsg rule create --resource-group DfC-CSPM-RG --nsg-name <nsg-name> --name PoC-AllowMgmtPorts --priority 100 --direction Inbound --access Allow --protocol Tcp --source-address-prefixes '*' --destination-port-ranges 22 3389"]
+  ],
+  expected:"The 'Management ports should be closed on your virtual machines' and just-in-time recommendations appear.",
+  cleanup:"az network nsg rule delete --resource-group DfC-CSPM-RG --nsg-name <nsg-name> --name PoC-AllowMgmtPorts"},
+ {id:"REC-03",title:"Internet-facing VM without a network security group",type:"Misconfiguration",sev:"High",cap:"Recommendations",
+  outcome:"Internet-facing virtual machines should be protected with network security groups",
+  desc:"Exposes a VM with a public IP and no NSG on its NIC or subnet.",
+  prereq:["Permission to create VMs and networking."],
+  steps:[
+   ["Deploy a VM with a public IP.","az vm create --resource-group DfC-CSPM-RG --name csp-novm-nsg --image Ubuntu2204 --size Standard_B1s --admin-username pocadmin --generate-ssh-keys --public-ip-sku Standard"],
+   ["Remove the NSG from the VM's NIC so it has no network protection.","az network nic update --resource-group DfC-CSPM-RG --name <nic-name> --remove networkSecurityGroup"]
+  ],
+  expected:"The 'Internet-facing virtual machines should be protected with network security groups' recommendation appears.",
+  cleanup:"Re-associate an NSG with the NIC, or delete the VM and its resources."},
+ {id:"REC-04",title:"Key Vault without purge protection",type:"Misconfiguration",sev:"Medium",cap:"Recommendations",
+  outcome:"Key vaults should have purge protection enabled",
+  desc:"Creates a Key Vault without purge protection, leaving deleted vault objects permanently removable.",
+  prereq:["Permission to create Key Vaults."],
+  steps:[
+   ["Create a Key Vault without the purge protection flag.","az keyvault create --name dfc-csp-kv-poc --resource-group DfC-CSPM-RG --location eastus"]
+  ],
+  expected:"The 'Key vaults should have purge protection enabled' recommendation appears for the vault.",
+  cleanup:"Enable purge protection (az keyvault update --name dfc-csp-kv-poc --enable-purge-protection true) or delete the vault."},
+ {id:"REC-05",title:"SQL database with Transparent Data Encryption disabled",type:"Misconfiguration",sev:"Low",cap:"Recommendations",
+  outcome:"Transparent Data Encryption on SQL databases should be enabled",
+  desc:"Disables TDE on a test SQL database, removing encryption at rest.",
+  prereq:["A test Azure SQL server and database."],
+  steps:[
+   ["Disable TDE on the test database.","az sql db tde set --resource-group DfC-CSPM-RG --server <sql-server> --database <db-name> --status Disabled"]
+  ],
+  expected:"The 'Transparent Data Encryption on SQL databases should be enabled' recommendation appears.",
+  cleanup:"Re-enable TDE: az sql db tde set --resource-group DfC-CSPM-RG --server <sql-server> --database <db-name> --status Enabled"},
+ {id:"REC-06",title:"Web app not enforcing HTTPS",type:"Misconfiguration",sev:"Medium",cap:"Recommendations",
+  outcome:"Web Application should only be accessible over HTTPS",
+  desc:"Disables the HTTPS-only setting on a web app so it accepts plaintext HTTP traffic.",
+  prereq:["A test App Service web app."],
+  steps:[
+   ["Disable the HTTPS-only enforcement.","az webapp update --resource-group DfC-CSPM-RG --name <webapp-name> --set httpsOnly=false"]
+  ],
+  expected:"The 'Web Application should only be accessible over HTTPS' recommendation appears.",
+  cleanup:"az webapp update --resource-group DfC-CSPM-RG --name <webapp-name> --set httpsOnly=true"},
+ {id:"REC-07",title:"Remediate a recommendation and verify Secure Score",type:"Capability",sev:"Informational",cap:"Secure Score",
+  outcome:"Secure Score increases after remediation",
+  desc:"Confirms the closed-loop behavior: remediating a recommendation moves resources to healthy and raises the Secure Score.",
+  prereq:["At least one open recommendation from REC-01 to REC-06."],
+  steps:[
+   ["Record the current Secure Score.","az security secure-scores list -o table"],
+   ["Open Recommendations, select an unhealthy recommendation, and use the **Fix** action (or remediate via the Cleanup step of its test).",""],
+   ["Wait for the next score recalculation (~8 hours) and re-check the score.","az security secure-score-controls list -o table"]
+  ],
+  expected:"The remediated resource moves to healthy, its security control score rises, and the overall Secure Score increases.",
+  cleanup:"None."}
+];
+
+const COMPLIANCE_TESTS = [
+ {id:"CMP-01",title:"Review Microsoft Cloud Security Benchmark compliance",type:"Capability",sev:"Informational",cap:"Compliance",
+  outcome:"MCSB compliance dashboard shows control pass/fail",
+  desc:"The Microsoft Cloud Security Benchmark (MCSB) is assigned by default. This test confirms the regulatory compliance dashboard renders its control breakdown.",
+  prereq:["Defender CSPM enabled; some test resources deployed."],
+  steps:[
+   ["Open **Microsoft Defender for Cloud > Regulatory compliance**.",""],
+   ["Select the **Microsoft Cloud Security Benchmark** standard.",""],
+   ["Expand a few controls and review the passed / failed / unassessed resources.",""]
+  ],
+  expected:"The MCSB standard is shown with a control-level breakdown of compliant and non-compliant resources.",
+  cleanup:"None."},
+ {id:"CMP-02",title:"Add a regulatory compliance standard",type:"Validation",sev:"Informational",cap:"Compliance",
+  outcome:"The added standard appears and begins assessing",
+  desc:"Adds an industry standard (e.g. PCI DSS, ISO 27001, NIST SP 800-53, CIS Azure) to the regulatory compliance dashboard.",
+  prereq:["Defender CSPM enabled; Owner or Security Admin role."],
+  steps:[
+   ["Open **Regulatory compliance > Manage compliance policies** (or Environment settings > Security policies).",""],
+   ["Select the PoC subscription scope.",""],
+   ["Enable a standard such as **PCI DSS v4**, **ISO/IEC 27001:2022**, **NIST SP 800-53 R5** or **CIS Microsoft Azure Foundations Benchmark v3.0**.",""],
+   ["Return to the Regulatory compliance dashboard.",""]
+  ],
+  expected:"The chosen standard appears in the dashboard and begins continuously assessing in-scope resources.",
+  cleanup:"Remove the standard from Manage compliance policies if no longer needed."},
+ {id:"CMP-03",title:"Drill into a failed control and remediate",type:"Capability",sev:"Informational",cap:"Compliance",
+  outcome:"A failed compliance control moves toward compliant after remediation",
+  desc:"Exercises the compliance remediation workflow: failing control to failing resource to fix.",
+  prereq:["At least one standard with failing controls (CMP-01 or CMP-02)."],
+  steps:[
+   ["In the Regulatory compliance dashboard, expand a failing control and select a failed assessment.",""],
+   ["Open the underlying recommendation, review the affected resources and apply the **Fix** / remediation steps.",""],
+   ["After reassessment, confirm the control's compliance state improves.",""]
+  ],
+  expected:"The remediated resources move to compliant and the control's status improves on the dashboard.",
+  cleanup:"None."},
+ {id:"CMP-04",title:"Download a compliance audit report",type:"Capability",sev:"Informational",cap:"Compliance",
+  outcome:"A compliance report (PDF / CSV) is generated",
+  desc:"Validates the audit-evidence export capability of the regulatory compliance dashboard.",
+  prereq:["At least one compliance standard assigned."],
+  steps:[
+   ["In the Regulatory compliance dashboard, select a standard.",""],
+   ["Use **Download report** (PDF) and/or **Download report (CSV)** / certification report.",""],
+   ["Open the downloaded file and confirm it lists control status.",""]
+  ],
+  expected:"A report file downloads containing the standard's control compliance detail.",
+  cleanup:"None."},
+ {id:"CMP-05",title:"Create a custom security standard",type:"Validation",sev:"Informational",cap:"Custom standards",
+  outcome:"The custom standard appears in Regulatory compliance",
+  desc:"Builds a custom standard from selected built-in (and custom) recommendations.",
+  prereq:["Defender CSPM enabled; Owner role."],
+  steps:[
+   ["Open **Environment settings > select scope > Security policies**.",""],
+   ["Select **+ Create > Standard**.",""],
+   ["Name the standard, select a set of recommendations to include, and create it.",""]
+  ],
+  expected:"The custom standard appears in the Regulatory compliance dashboard alongside built-in standards.",
+  cleanup:"Delete the custom standard from Security policies if no longer needed."},
+ {id:"CMP-06",title:"Create a custom (KQL-based) recommendation",type:"Validation",sev:"Informational",cap:"Custom recommendations",
+  outcome:"The custom recommendation evaluates resources",
+  desc:"Creates a custom recommendation defined by a KQL query over the security graph.",
+  prereq:["Defender CSPM enabled; Security Admin role."],
+  steps:[
+   ["Open **Environment settings > select scope > Security policies > + Create > Custom recommendation**.",""],
+   ["Enter a name, description and severity.",""],
+   ["Write and **Run** a KQL query that returns healthy/unhealthy resources (start from a built-in template).",""],
+   ["Assign the recommendation to a custom standard, then Review and create.",""]
+  ],
+  expected:"The custom recommendation evaluates resources and appears in the Recommendations list and its assigned standard.",
+  cleanup:"Delete the custom recommendation from Security policies if no longer needed."}
+]; /*=CMP=*/
+const ATTACKPATH_TESTS = [
+ {id:"ATP-01",title:"Generate an attack path: exposed VM with a vulnerability",type:"Misconfiguration",sev:"High",cap:"Attack path",
+  outcome:"Attack path: internet-exposed VM with high-severity vulnerabilities",
+  desc:"Creates the classic entry-point attack path: an internet-reachable VM that also carries a known vulnerability.",
+  prereq:["Defender CSPM with agentless scanning enabled; ~24 hours soak time."],
+  steps:[
+   ["Deploy a VM with a public IP and an NSG rule allowing inbound access.","az vm create --resource-group DfC-CSPM-RG --name csp-atp-vm --image Ubuntu2004 --size Standard_B1s --admin-username pocadmin --generate-ssh-keys --public-ip-sku Standard"],
+   ["Leave the OS unpatched / install older packages so the agentless scan finds vulnerabilities.",""],
+   ["After the agentless scan and graph refresh, open **Attack path analysis**.",""]
+  ],
+  expected:"An attack path appears showing the internet-exposed VM with high-severity vulnerabilities as an exploitable entry point.",
+  cleanup:"Delete the VM and its public IP, or remove the inbound NSG rule."},
+ {id:"ATP-02",title:"Attack path: exposed VM with access to a data store",type:"Capability",sev:"High",cap:"Attack path",
+  outcome:"Multi-hop attack path: VM to data store via an identity",
+  desc:"Extends ATP-01 into a lateral-movement path by giving the exposed VM an identity with permissions on a storage account.",
+  prereq:["The csp-atp-vm VM from ATP-01; a test storage account."],
+  steps:[
+   ["Assign a system-assigned managed identity to the VM.","az vm identity assign --resource-group DfC-CSPM-RG --name csp-atp-vm"],
+   ["Grant that identity a data role on a storage account.","az role assignment create --assignee <vm-identity-principal-id> --role \"Storage Blob Data Reader\" --scope <storage-account-id>"],
+   ["After the graph refresh, review the attack path in **Attack path analysis**.",""]
+  ],
+  expected:"A multi-hop attack path appears: internet-exposed vulnerable VM to its identity to the storage account.",
+  cleanup:"Remove the role assignment and the managed identity."},
+ {id:"ATP-03",title:"Attack path: exposed storage with sensitive data",type:"Capability",sev:"High",cap:"Attack path",
+  outcome:"Internet exposed Azure Storage container with sensitive data is publicly accessible",
+  desc:"Creates a data attack path by combining public storage exposure with discovered sensitive data.",
+  prereq:["Sensitive data discovery enabled; the storage account from DIP-01 holding synthetic PII."],
+  steps:[
+   ["Ensure a container in the test storage account is set to public access and contains synthetic sensitive data.",""],
+   ["After sensitive data discovery and graph refresh, open **Attack path analysis** and filter by Risk factor = Sensitive data.",""]
+  ],
+  expected:"A data-centric attack path appears for the publicly accessible storage container holding sensitive data.",
+  cleanup:"Set the container back to private and remove the synthetic data."},
+ {id:"ATP-04",title:"Attack path: exposed container workload",type:"Capability",sev:"High",cap:"Attack path",
+  outcome:"Attack path involving an internet-exposed Kubernetes workload",
+  desc:"Surfaces a container attack path from an internet-exposed AKS service running a vulnerable image.",
+  prereq:["Defender CSPM with Agentless discovery for Kubernetes; an AKS cluster (see Agentless Scanning area)."],
+  steps:[
+   ["Deploy a workload on AKS using a vulnerable image and expose it with a LoadBalancer service.",""],
+   ["After the graph refresh, open **Attack path analysis** and locate the container attack path.",""]
+  ],
+  expected:"An attack path appears for the internet-exposed Kubernetes workload running a vulnerable image.",
+  cleanup:"Delete the exposed service and workload."},
+ {id:"ATP-05",title:"Remediate an attack-path node and confirm the path breaks",type:"Capability",sev:"Informational",cap:"Attack path",
+  outcome:"The attack path no longer appears after remediation",
+  desc:"Confirms attack paths are dynamic: removing one node's risk breaks the chain.",
+  prereq:["An active attack path from ATP-01 to ATP-04."],
+  steps:[
+   ["Pick an attack path and remediate one node (close the public port, patch the vulnerability, or remove the role assignment).",""],
+   ["Wait for the next cloud security graph refresh.",""],
+   ["Re-open **Attack path analysis** and confirm the path is resolved.",""]
+  ],
+  expected:"After remediation and the next graph refresh, the attack path is no longer listed.",
+  cleanup:"None."},
+ {id:"ATP-06",title:"Review attack-path risk factors and remediation",type:"Capability",sev:"Informational",cap:"Attack path",
+  outcome:"Risk factors and per-node recommendations are shown",
+  desc:"Exercises the attack-path detail view: enrichment, risk factors and recommended remediation.",
+  prereq:["At least one active attack path."],
+  steps:[
+   ["Open an attack path and review its **risk factors** (internet exposure, sensitive data, lateral movement potential, permissions).",""],
+   ["Select individual nodes and review the **Insights** and recommendations for each.",""],
+   ["Note the recommended remediation order.",""]
+  ],
+  expected:"The attack path shows enriched risk factors and actionable per-node remediation guidance.",
+  cleanup:"None."}
+]; /*=ATP=*/
+const EXPLORER_TESTS = [
+ {id:"CSE-01",title:"Run a built-in cloud security explorer query template",type:"Capability",sev:"Informational",cap:"Security explorer",
+  outcome:"A query template returns matching resources",
+  desc:"Confirms the cloud security explorer works and that the built-in query templates run against your graph.",
+  prereq:["Defender CSPM enabled; the cloud security graph populated (~24 hours)."],
+  steps:[
+   ["Open **Microsoft Defender for Cloud > Cloud Security Explorer**.",""],
+   ["Select **Query templates**, choose one (e.g. internet-exposed resources), and select **Open query**.",""],
+   ["Select **Search** and review the results.",""]
+  ],
+  expected:"The template runs and returns the matching resources from your environment.",
+  cleanup:"None."},
+ {id:"CSE-02",title:"Query internet-exposed VMs with high-severity vulnerabilities",type:"Capability",sev:"Informational",cap:"Security explorer",
+  outcome:"Exposed, vulnerable VMs are returned",
+  desc:"Builds a graph query that combines internet exposure with vulnerability data.",
+  prereq:["Agentless scanning has scanned the VMs; the ATP-01 VM is a good target."],
+  steps:[
+   ["In Cloud Security Explorer, select the resource type **Virtual machines**.",""],
+   ["Add the filter **Internet exposed**.",""],
+   ["Add a subfilter for **has high severity vulnerabilities** and select **Search**.",""]
+  ],
+  expected:"The query returns internet-exposed VMs that carry high-severity vulnerabilities.",
+  cleanup:"None."},
+ {id:"CSE-03",title:"Query VMs with plaintext secrets that enable lateral movement",type:"Capability",sev:"Informational",cap:"Security explorer",
+  outcome:"VMs with secrets that can authenticate elsewhere are returned",
+  desc:"Uses the security graph to find machines whose discovered plaintext secrets can authenticate to other resources.",
+  prereq:["Agentless secret scanning has run; the VUL-02 VM is a good target."],
+  steps:[
+   ["In Cloud Security Explorer, open the query template **'VM with plaintext secret that can authenticate to another VM / storage account / SQL database'**.",""],
+   ["Run the query.",""]
+  ],
+  expected:"The query returns VMs whose plaintext secrets create a lateral-movement path to other resources.",
+  cleanup:"None."},
+ {id:"CSE-04",title:"Query publicly exposed storage containing sensitive data",type:"Capability",sev:"Informational",cap:"Security explorer",
+  outcome:"Public storage with sensitive data is returned",
+  desc:"Combines exposure and data-sensitivity facets in a single graph query.",
+  prereq:["Sensitive data discovery has run; the DIP-01 storage account is a good target."],
+  steps:[
+   ["In Cloud Security Explorer, select the resource type **Storage** (storage accounts / containers).",""],
+   ["Add the filters **Internet exposed** and **contains sensitive data**, then **Search**.",""]
+  ],
+  expected:"The query returns storage resources that are publicly exposed and hold sensitive data.",
+  cleanup:"None."},
+ {id:"CSE-05",title:"Query identities with excessive permissions to critical assets",type:"Capability",sev:"Informational",cap:"Security explorer",
+  outcome:"Over-privileged identities and their reachable assets are returned",
+  desc:"Uses the graph to map identity entitlements to high-value resources.",
+  prereq:["Permissions Management (CIEM) enabled; identities present (DIP-04 is a good target)."],
+  steps:[
+   ["In Cloud Security Explorer, select the entity type **Identity & access** (identities).",""],
+   ["Add a filter for permissions to data stores / critical assets and select **Search**.",""],
+   ["Review the entitlement paths returned.",""]
+  ],
+  expected:"The query returns identities with broad permissions and the critical assets they can reach.",
+  cleanup:"None."},
+ {id:"CSE-06",title:"Save, share and export a cloud security explorer query",type:"Capability",sev:"Informational",cap:"Security explorer",
+  outcome:"A query is saved, link-shared and exported to CSV",
+  desc:"Exercises the collaboration features of cloud security explorer.",
+  prereq:["A query built from CSE-01 to CSE-05."],
+  steps:[
+   ["With a query open and results shown, select **Download CSV**.",""],
+   ["Select **Share query link** and copy the link.",""],
+   ["Save the query for reuse.",""]
+  ],
+  expected:"A CSV of the results downloads and a shareable query link is generated.",
+  cleanup:"None."}
+]; /*=CSE=*/
+const VULN_TESTS = [
+ {id:"VUL-01",title:"Agentless vulnerability scan of a VM",type:"Misconfiguration",sev:"High",cap:"Agentless scanning",
+  outcome:"Machines should have vulnerability findings resolved",
+  desc:"Confirms agentless disk-snapshot scanning discovers OS/package vulnerabilities on a VM with no agent installed.",
+  prereq:["Defender CSPM with Agentless scanning for machines enabled; ~24 hours soak time."],
+  steps:[
+   ["Deploy a Linux VM using an older image and do not patch it.","az vm create --resource-group DfC-CSPM-RG --name csp-vuln-vm --image Ubuntu2004 --size Standard_B1s --admin-username pocadmin --generate-ssh-keys"],
+   ["Wait for the agentless scan (about 24 hours).",""],
+   ["Open Recommendations and filter for the VM.",""]
+  ],
+  expected:"Vulnerability findings appear for the VM under the 'Machines should have vulnerability findings resolved' recommendation.",
+  cleanup:"Delete the VM and its disk/resources."},
+ {id:"VUL-02",title:"Agentless secret scanning on a VM",type:"Misconfiguration",sev:"Medium",cap:"Agentless scanning",
+  outcome:"Machines should have secrets findings resolved",
+  desc:"Plants a plaintext secret on a VM disk and confirms agentless secret scanning detects it.",
+  prereq:["Defender CSPM with Agentless scanning enabled; SSH access to a test VM."],
+  steps:[
+   ["SSH into a test VM and create a file containing a plaintext secret (a storage connection string or a private key).","printf 'DefaultEndpointsProtocol=https;AccountName=poctest;AccountKey=Zm9vYmFyZmFrZWtleXBvY3Rlc3Q9PQ==;EndpointSuffix=core.windows.net' > ~/app.config"],
+   ["Also leave an unprotected SSH private key on disk to exercise lateral-movement detection.","ssh-keygen -t rsa -b 2048 -f ~/id_rsa_poc -N ''"],
+   ["Wait for the agentless scan (about 24 hours) and review Recommendations.",""]
+  ],
+  expected:"The 'Machines should have secrets findings resolved' recommendation appears, listing the planted secrets.",
+  cleanup:"Delete ~/app.config and ~/id_rsa_poc* from the VM."},
+ {id:"VUL-03",title:"Registry container image vulnerability assessment",type:"Misconfiguration",sev:"High",cap:"Container VA",
+  outcome:"Azure registry container images should have vulnerabilities resolved",
+  desc:"Pushes a deliberately outdated image to Azure Container Registry so the agentless registry scan finds CVEs.",
+  prereq:["Defender CSPM with container VA enabled; an Azure Container Registry."],
+  steps:[
+   ["Import an older base image into your registry.","az acr import --name <acr-name> --source mcr.microsoft.com/azurelinux/base/nginx:1.25 --image poc-vuln-image:latest"],
+   ["Wait for the agentless registry scan to complete, then open Recommendations.",""]
+  ],
+  expected:"The 'Azure registry container images should have vulnerabilities resolved' recommendation lists the image's CVEs.",
+  cleanup:"Delete the image: az acr repository delete --name <acr-name> --image poc-vuln-image:latest"},
+ {id:"VUL-04",title:"Running container image vulnerability assessment",type:"Misconfiguration",sev:"High",cap:"Container VA",
+  outcome:"Running container images should have vulnerability findings resolved",
+  desc:"Runs the vulnerable image on AKS so vulnerability assessment evaluates the running workload.",
+  prereq:["The vulnerable image from VUL-03; an AKS cluster with kubectl configured."],
+  steps:[
+   ["Deploy the vulnerable image as a workload on AKS.","kubectl create deployment poc-vuln --image=<acr-name>.azurecr.io/poc-vuln-image:latest"],
+   ["Wait for the agentless scan, then open Recommendations.",""]
+  ],
+  expected:"The 'Running container images should have vulnerability findings resolved' recommendation appears for the workload.",
+  cleanup:"kubectl delete deployment poc-vuln"},
+ {id:"VUL-05",title:"Verify risk prioritization of recommendations",type:"Capability",sev:"Informational",cap:"Risk prioritization",
+  outcome:"Recommendations are ranked by contextual risk level",
+  desc:"Confirms Defender CSPM assigns a risk level so the riskiest findings rank above low-impact ones.",
+  prereq:["Several recommendations present, including the internet-exposed vulnerable VM from ATP-01 / VUL-01."],
+  steps:[
+   ["Open **Recommendations** and switch to the risk-based view.",""],
+   ["Confirm the internet-exposed, vulnerable VM ranks higher than a low-risk finding.",""],
+   ["Open a high-risk recommendation and review the contributing risk factors (exposure, sensitive data, lateral movement).",""]
+  ],
+  expected:"Recommendations display risk levels; contextual factors elevate exposed/critical findings.",
+  cleanup:"None."},
+ {id:"VUL-06",title:"Internet exposure analysis",type:"Capability",sev:"Informational",cap:"Internet exposure",
+  outcome:"Internet-exposed resources are identified with exposure detail",
+  desc:"Validates that Defender CSPM analyses network configuration and reachability to flag internet-exposed assets.",
+  prereq:["Defender CSPM enabled; at least one internet-exposed resource (ATP-01)."],
+  steps:[
+   ["Open **Inventory** (or Recommendations) and filter for **internet-exposed** resources.",""],
+   ["Select an exposed resource and review the exposure detail (open ports, NSG rules, public IP).",""]
+  ],
+  expected:"Internet-exposed resources are flagged and the exposure path (ports / NSG / public IP) is shown.",
+  cleanup:"None."}
+]; /*=VUL=*/
+const DATAID_TESTS = [
+ {id:"DIP-01",title:"Sensitive data discovery on a storage account",type:"Misconfiguration",sev:"Informational",cap:"DSPM",
+  outcome:"The storage account is labelled as containing sensitive data",
+  desc:"Seeds a storage account with synthetic PII and confirms agentless sensitive data discovery classifies it.",
+  prereq:["Defender CSPM with Sensitive data discovery enabled; ~24 hours soak time."],
+  steps:[
+   ["Create a local file containing synthetic sensitive data (fictitious values only).","printf 'name,ssn,card\\nTest User,123-45-6789,4111111111111111\\n' > sample-pii.csv"],
+   ["Upload it to a test storage account container.","az storage blob upload --account-name <storage-acct> --container-name data-test --name sample-pii.csv --file sample-pii.csv --auth-mode login"],
+   ["Wait for sensitive data discovery (about 24 hours), then check **Inventory** and the resource's **Insights**.",""]
+  ],
+  expected:"The storage account shows a sensitivity label / 'Contains sensitive data' in Inventory and resource Insights.",
+  cleanup:"Delete sample-pii.csv from the container and locally."},
+ {id:"DIP-02",title:"Sensitive data attack path",type:"Capability",sev:"High",cap:"DSPM",
+  outcome:"An attack path with the 'Sensitive data' risk factor",
+  desc:"Confirms discovered sensitive data enriches the cloud security graph and produces data-centric attack paths.",
+  prereq:["DIP-01 completed; the container made publicly accessible."],
+  steps:[
+   ["Make the container holding the synthetic PII publicly accessible.",""],
+   ["After the graph refresh, open **Attack path analysis** and filter by **Risk factor = Sensitive data**.",""]
+  ],
+  expected:"An attack path appears for the publicly exposed storage container that holds sensitive data.",
+  cleanup:"Set the container back to private and remove the synthetic data."},
+ {id:"DIP-03",title:"Explore sensitive data in inventory and security explorer",type:"Capability",sev:"Informational",cap:"DSPM",
+  outcome:"Resources are filterable by sensitivity label / info type",
+  desc:"Validates that sensitive-data classification is queryable across Defender for Cloud.",
+  prereq:["DIP-01 completed (sensitive data discovered)."],
+  steps:[
+   ["In **Inventory**, filter resources by **sensitivity label** or information type.",""],
+   ["In **Cloud Security Explorer**, run a sensitive-data query template.",""],
+   ["On a classified resource, open Insights and expand 'Contains sensitive data'; use **Export** for the detail.",""]
+  ],
+  expected:"Resources containing sensitive data are returned by inventory filters and explorer queries.",
+  cleanup:"None."},
+ {id:"DIP-04",title:"Over-provisioned identity (CIEM)",type:"Misconfiguration",sev:"Medium",cap:"CIEM",
+  outcome:"Azure overprovisioned identities should have only the necessary permissions",
+  desc:"Creates an identity with broad permissions it does not use, so CIEM flags it as over-provisioned.",
+  prereq:["Defender CSPM with Permissions Management (CIEM) enabled."],
+  steps:[
+   ["Create a test service principal.","az ad sp create-for-rbac --name poc-overprivileged-sp --skip-assignment"],
+   ["Assign it a broad role at subscription scope.","az role assignment create --assignee <sp-app-id> --role Contributor --scope /subscriptions/<sub-id>"],
+   ["Leave the identity largely unused; wait for CIEM analysis (within hours).",""]
+  ],
+  expected:"The identity appears under 'Azure overprovisioned identities should have only the necessary permissions'.",
+  cleanup:"Remove the role assignment and delete the service principal."},
+ {id:"DIP-05",title:"Inactive identity (CIEM)",type:"Misconfiguration",sev:"Medium",cap:"CIEM",
+  outcome:"Permissions of inactive identities in your subscription should be revoked",
+  desc:"Creates an identity with a role assignment and leaves it inactive so CIEM flags it for revocation.",
+  prereq:["Defender CSPM with CIEM enabled; an identity that has not signed in / been used."],
+  steps:[
+   ["Create a test service principal and assign it a role.","az ad sp create-for-rbac --name poc-inactive-sp --role Reader --scopes /subscriptions/<sub-id>"],
+   ["Do not use the identity; wait for the CIEM inactivity window.",""],
+   ["Review Recommendations for the inactive-identity finding.",""]
+  ],
+  expected:"The identity appears under 'Permissions of inactive identities in your subscription should be revoked'.",
+  cleanup:"Remove the role assignment and delete the service principal."},
+ {id:"DIP-06",title:"Identity entitlement and attack-path query",type:"Capability",sev:"Informational",cap:"CIEM",
+  outcome:"Identity entitlements and identity-based attack paths are visible",
+  desc:"Uses CIEM data in the graph to map what identities can reach and to surface identity-driven attack paths.",
+  prereq:["CIEM enabled; identities present (DIP-04 / DIP-05)."],
+  steps:[
+   ["In **Cloud Security Explorer**, query identities and their effective permissions to resources.",""],
+   ["In **Attack path analysis**, locate paths where an identity provides the lateral-movement hop.",""]
+  ],
+  expected:"The graph shows identity entitlement mappings and identity-based attack paths.",
+  cleanup:"None."}
+]; /*=DIP=*/
+const MULTICLOUD_TESTS = [
+ {id:"MCD-01",title:"Connect an AWS account for CSPM",type:"Validation",sev:"Informational",cap:"Multicloud",
+  outcome:"The AWS account is connected and assessed",
+  desc:"Onboards an AWS account so Defender CSPM extends posture management to AWS resources.",
+  prereq:["Defender CSPM enabled; access to a test AWS account with rights to run CloudFormation."],
+  steps:[
+   ["Open **Environment settings > Add environment > Amazon Web Services**.",""],
+   ["Enter the AWS account details and select the **Defender CSPM** plan.",""],
+   ["Download and run the generated **CloudFormation template** in the AWS account.",""],
+   ["Complete onboarding and wait a few hours for assessment.",""]
+  ],
+  expected:"The AWS account appears under Environment settings and AWS recommendations populate.",
+  cleanup:"Remove the AWS connector if no longer needed."},
+ {id:"MCD-02",title:"Connect a GCP project for CSPM",type:"Validation",sev:"Informational",cap:"Multicloud",
+  outcome:"The GCP project is connected and assessed",
+  desc:"Onboards a GCP project so Defender CSPM extends posture management to GCP resources.",
+  prereq:["Defender CSPM enabled; access to a test GCP project with rights to run the onboarding script."],
+  steps:[
+   ["Open **Environment settings > Add environment > Google Cloud Platform**.",""],
+   ["Enter the GCP project/organization details and select the **Defender CSPM** plan.",""],
+   ["Run the generated **GCloud (Cloud Shell)** or **Terraform** onboarding script in GCP.",""],
+   ["Complete onboarding and wait ~6 hours for assessment.",""]
+  ],
+  expected:"The GCP project appears under Environment settings and GCP recommendations populate.",
+  cleanup:"Remove the GCP connector if no longer needed."},
+ {id:"MCD-03",title:"Connect a DevOps environment",type:"Validation",sev:"Informational",cap:"DevOps posture",
+  outcome:"DevOps inventory and posture recommendations appear",
+  desc:"Connects Azure DevOps or GitHub so DevOps security posture management scans repositories and pipelines.",
+  prereq:["Defender CSPM enabled; an Azure DevOps or GitHub organization to onboard."],
+  steps:[
+   ["Open **Environment settings > Add environment > Azure DevOps** (or **GitHub**).",""],
+   ["Authorize the connection and select the organizations to onboard.",""],
+   ["Wait for the first scan (runs every 24 hours), then review the DevOps inventory and recommendations.",""]
+  ],
+  expected:"The DevOps environment appears and posture recommendations (branch protection, pipeline permissions, secret scanning) populate.",
+  cleanup:"Remove the DevOps connector if no longer needed."}
+]; /*=MCD=*/
+const GOVERNANCE_TESTS = [
+ {id:"GOV-01",title:"Create a governance rule",type:"Validation",sev:"Informational",cap:"Governance",
+  outcome:"Matching recommendations get an owner and a due date",
+  desc:"Creates a governance rule that auto-assigns ownership and an SLA to recommendations.",
+  prereq:["Defender CSPM enabled; Contributor / Security Admin / Owner role."],
+  steps:[
+   ["Open **Environment settings > Governance rules > Create governance rule**.",""],
+   ["Set a name, scope and priority; choose what it affects (by severity, risk level, category or specific recommendations).",""],
+   ["Set the owner (by email address or resource tag) and a remediation timeframe (7/14/30/90 days); optionally apply a grace period.",""],
+   ["Create the rule and confirm matching recommendations now show an owner and due date.",""]
+  ],
+  expected:"Recommendations in scope are assigned an owner and a due date, tracked in the Governance report.",
+  cleanup:"Delete the governance rule if no longer needed."},
+ {id:"GOV-02",title:"Create a recommendation exemption",type:"Validation",sev:"Informational",cap:"Exemptions",
+  outcome:"The exempted resource shows as Exempted / Not applicable",
+  desc:"Exempts a resource from a recommendation using the Mitigated or Waiver category and confirms the Secure Score effect.",
+  prereq:["Owner or Security Admin role; an open recommendation with at least one resource."],
+  steps:[
+   ["Open **Recommendations**, select a recommendation, and choose **Exempt**.",""],
+   ["Scope the exemption to **Selected resources** and pick a test resource.",""],
+   ["Choose a category: **Resolved through third-party service (Mitigated)** or **Risk accepted (Waiver)**; add a name and description.",""],
+   ["Create the exemption (allow up to 24 hours to apply).",""]
+  ],
+  expected:"The resource shows as Exempted / Not applicable; Mitigated counts it as healthy, Waiver removes it from Secure Score.",
+  cleanup:"Delete the exemption to restore normal assessment."},
+ {id:"GOV-03",title:"Query resources with Asset Inventory",type:"Capability",sev:"Informational",cap:"Inventory",
+  outcome:"Filtered resource list and a saved Resource Graph query",
+  desc:"Exercises the asset inventory view and its export to Azure Resource Graph.",
+  prereq:["Defender for Cloud monitoring some resources."],
+  steps:[
+   ["Open **Microsoft Defender for Cloud > Inventory**.",""],
+   ["Apply filters (resource type, active recommendation, sensitivity label, tags).",""],
+   ["Select **Open query** to convert the filters into editable KQL in Resource Graph Explorer; refine and **Save** the query.",""]
+  ],
+  expected:"The inventory returns the filtered resource set and the query can be saved for reuse.",
+  cleanup:"None."},
+ {id:"GOV-04",title:"Configure continuous export to Log Analytics",type:"Validation",sev:"Informational",cap:"Continuous export",
+  outcome:"Recommendations and Secure Score flow to Log Analytics",
+  desc:"Sets up continuous export so posture data lands in a Log Analytics workspace / SIEM.",
+  prereq:["A Log Analytics workspace in the PoC subscription."],
+  steps:[
+   ["Open **Environment settings > select scope > Continuous export**.",""],
+   ["Choose **Log Analytics workspace** and select the data types **Security recommendations** and **Secure score**.",""],
+   ["Save, then after data flows, query the workspace.","SecurityRecommendation | sort by TimeGenerated desc\nSecureScores | sort by TimeGenerated desc"]
+  ],
+  expected:"Recommendations and Secure Score changes appear in the SecurityRecommendation and SecureScores tables.",
+  cleanup:"Disable the continuous export configuration if no longer needed."},
+ {id:"GOV-05",title:"Configure workflow automation for recommendations",type:"Validation",sev:"Informational",cap:"Workflow automation",
+  outcome:"A Logic App runs when a recommendation is created",
+  desc:"Wires a recommendation trigger to a Logic App so posture changes can drive tickets or notifications.",
+  prereq:["A consumption Logic App; Security Admin / Owner plus Logic App Contributor role."],
+  steps:[
+   ["Open **Workflow automation > Add workflow automation**.",""],
+   ["Name it, set the scope, and choose the trigger **'A security recommendation is created or triggered'**.",""],
+   ["Select the target Logic App and save.",""],
+   ["Trigger a recommendation (e.g. re-run a Misconfiguration test) and confirm the Logic App run history shows a run.",""]
+  ],
+  expected:"When a matching recommendation fires, the configured Logic App is triggered.",
+  cleanup:"Delete the workflow automation if no longer needed."}
+]; /*=GOV=*/
+
+const TESTS = {
+  setup:SETUP_TESTS, recommendations:REC_TESTS, compliance:COMPLIANCE_TESTS,
+  attackpath:ATTACKPATH_TESTS, explorer:EXPLORER_TESTS, vuln:VULN_TESTS,
+  dataidentity:DATAID_TESTS, multicloud:MULTICLOUD_TESTS, governance:GOVERNANCE_TESTS
+};
+
+/* =================================================================
+   APP LOGIC
+   ================================================================= */
+const LS_PROG="dfc-cspm-poc-v1", LS_NOTES="dfc-cspm-notes-v1";
+let progress={}, notes={};
+try{progress=JSON.parse(localStorage.getItem(LS_PROG))||{};}catch(e){progress={};}
+try{notes=JSON.parse(localStorage.getItem(LS_NOTES))||{};}catch(e){notes={};}
+const filters={q:"",sev:new Set(),type:new Set(),status:new Set()};
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function inl(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\{\{(.+?)\}\}/g,'<code class="ic">$1</code>');}
+function codeBlock(t){return '<div class="cb"><pre><code>'+esc(t)+'</code></pre><button class="copy">Copy</button></div>';}
+function tableHtml(head,rows){
+  return '<table class="tbl"><thead><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+
+    '</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+inl(c)+'</td>').join('')+'</tr>').join('')+
+    '</tbody></table>';
+}
+function gsBlock(b){
+  if(b.t==="h")return "<h3>"+esc(b.x)+"</h3>";
+  if(b.t==="p")return "<p>"+inl(b.x)+"</p>";
+  if(b.t==="code")return codeBlock(b.x);
+  if(b.t==="ul")return "<ul>"+b.x.map(i=>"<li>"+inl(i)+"</li>").join("")+"</ul>";
+  if(b.t==="ol")return "<ol>"+b.x.map(i=>"<li>"+inl(i)+"</li>").join("")+"</ol>";
+  if(b.t==="note")return '<div class="note note-'+b.v+'">'+inl(b.x)+"</div>";
+  if(b.t==="table")return tableHtml(b.head,b.rows);
+  return "";
+}
+
+function testCard(sc,catKey){
+  const st=progress[sc.id]||"notrun";
+  const searchText=(sc.id+" "+sc.title+" "+sc.outcome+" "+sc.cap+" "+sc.desc+" "+sc.type).toLowerCase();
+  let h='<div class="scenario" data-id="'+sc.id+'" data-sev="'+sc.sev+'" data-type="'+sc.type+
+    '" data-status="'+st+'" data-cat="'+catKey+'" data-text="'+esc(searchText)+'">';
+  h+='<div class="sc-head">';
+  h+='<span class="dot '+(st==="notrun"?"":st)+'"></span>';
+  h+='<span class="sc-id">'+esc(sc.id)+'</span>';
+  h+='<span class="sc-title">'+esc(sc.title)+'</span>';
+  h+='<span class="badges">';
+  h+='<span class="badge b-type" data-v="'+sc.type+'">'+esc(sc.type)+'</span>';
+  h+='<span class="badge b-sev" data-v="'+sc.sev+'">'+esc(sc.sev)+'</span>';
+  h+='<span class="badge b-cap">'+esc(sc.cap)+'</span>';
+  h+='</span><span class="chev">&#9656;</span></div>';
+  h+='<div class="sc-body">';
+  h+='<div class="alert-line"><div class="k">Expected outcome</div><div class="v">'+esc(sc.outcome)+'</div></div>';
+  h+='<p class="d">'+inl(sc.desc)+'</p>';
+  if(sc.prereq&&sc.prereq.length){
+    h+='<h5>Prerequisites</h5><ul class="pre">'+sc.prereq.map(p=>"<li>"+inl(p)+"</li>").join("")+"</ul>";
+  }
+  h+='<h5>Steps</h5><ol class="steps">';
+  sc.steps.forEach(s=>{h+='<li><span class="stext">'+inl(s[0])+'</span>'+(s[1]?codeBlock(s[1]):"")+'</li>';});
+  h+='</ol>';
+  h+='<h5>Expected result</h5><div class="expected">'+inl(sc.expected)+'</div>';
+  if(sc.cleanup&&sc.cleanup!=="None."&&sc.cleanup!=="None required."){
+    h+='<div class="cleanup"><strong>Cleanup:</strong> '+inl(sc.cleanup)+'</div>';
+  }
+  if(sc.note)h+='<div class="note note-info">'+inl(sc.note)+'</div>';
+  h+='<div class="sc-foot">';
+  h+='<button class="statusbtn'+(st==="pass"?" sel":"")+'" data-s="pass">&#10003; Pass</button>';
+  h+='<button class="statusbtn'+(st==="fail"?" sel":"")+'" data-s="fail">&#10007; Fail</button>';
+  h+='<button class="statusbtn'+(st==="notrun"?" sel":"")+'" data-s="notrun">Not run</button>';
+  h+='<input class="sc-notes" placeholder="Observed recommendation / result / timestamp&hellip;" value="'+esc(notes[sc.id]||"")+'">';
+  h+='</div></div></div>';
+  return h;
+}
+
+function render(){
+  let html='<section class="section" id="getting-started">';
+  html+='<div class="section-head"><span class="emoji">🚀</span><div><h2>Getting Started</h2>'+
+    '<div class="plan">Prerequisites &amp; environment setup &mdash; complete before running tests</div></div></div>';
+  GS.forEach(g=>{
+    html+='<div class="section gs" id="'+g.id+'" style="margin-bottom:18px">';
+    html+='<div class="section-head"><span class="emoji">'+g.icon+'</span><div><h2 style="font-size:16px">'+esc(g.title)+'</h2></div></div>';
+    html+=g.blocks.map(gsBlock).join("");
+    html+='</div>';
+  });
+  html+='</section>';
+  CATEGORIES.forEach(c=>{
+    const list=TESTS[c.key]||[];
+    html+='<section class="section" id="cat-'+c.key+'">';
+    html+='<div class="section-head"><span class="emoji">'+c.icon+'</span><div>'+
+      '<h2>'+esc(c.name)+'</h2><div class="plan">Capability area &middot; '+esc(c.cap)+'</div></div></div>';
+    html+='<div class="section-desc">'+inl(c.desc)+'</div>';
+    html+='<div class="wl-prereq"><h4>Prerequisites for this area</h4><ul>'+
+      c.prereqs.map(p=>"<li>"+inl(p)+"</li>").join("")+'</ul></div>';
+    html+=list.map(sc=>testCard(sc,c.key)).join("");
+    html+='</section>';
+  });
+  document.getElementById("sections").innerHTML=html;
+  buildNav();
+  updateProgress();
+  applyFilters();
+}
+
+function buildNav(){
+  let h='<div class="nav-sect">Reference</div>';
+  h+='<a data-target="getting-started"><span class="ico">🚀</span>Getting Started</a>';
+  h+='<div class="nav-sect">Capability areas</div>';
+  CATEGORIES.forEach(c=>{
+    h+='<a data-target="cat-'+c.key+'" data-cat="'+c.key+'"><span class="ico">'+c.icon+
+      '</span>'+esc(c.short)+'<span class="ct" id="ct-'+c.key+'">0/0</span></a>';
+  });
+  document.getElementById("nav").innerHTML=h;
+}
+
+function updateProgress(){
+  let total=0,pass=0,fail=0;
+  CATEGORIES.forEach(c=>{
+    const list=TESTS[c.key]||[];
+    let p=0,f=0;
+    list.forEach(sc=>{const s=progress[sc.id];if(s==="pass")p++;if(s==="fail")f++;});
+    total+=list.length;pass+=p;fail+=f;
+    const ct=document.getElementById("ct-"+c.key);
+    if(ct){ct.textContent=(p+f)+"/"+list.length;
+      ct.parentElement.classList.toggle("done",list.length>0&&(p+f)===list.length);}
+  });
+  const done=pass+fail, pct=total?Math.round(done/total*100):0;
+  document.getElementById("navPct").textContent=pct+"%";
+  document.getElementById("navDone").textContent=done;
+  document.getElementById("navTotal").textContent=total;
+  document.getElementById("navP").style.width=(total?pass/total*100:0)+"%";
+  document.getElementById("navF").style.width=(total?fail/total*100:0)+"%";
+}
+
+function applyFilters(){
+  const q=filters.q.trim().toLowerCase();
+  document.querySelectorAll(".scenario").forEach(el=>{
+    let show=true;
+    if(q&&el.dataset.text.indexOf(q)===-1)show=false;
+    if(filters.sev.size&&!filters.sev.has(el.dataset.sev))show=false;
+    if(filters.type.size&&!filters.type.has(el.dataset.type))show=false;
+    if(filters.status.size&&!filters.status.has(el.dataset.status))show=false;
+    el.classList.toggle("hidden",!show);
+  });
+  document.querySelectorAll('section[id^="cat-"]').forEach(sec=>{
+    const any=sec.querySelector(".scenario:not(.hidden)");
+    const filtering=q||filters.sev.size||filters.type.size||filters.status.size;
+    sec.style.display=(filtering&&!any)?"none":"";
+  });
+}
+
+function setStatus(id,s){
+  if(s==="notrun")delete progress[id]; else progress[id]=s;
+  localStorage.setItem(LS_PROG,JSON.stringify(progress));
+  const card=document.querySelector('.scenario[data-id="'+id+'"]');
+  if(card){
+    card.dataset.status=s;
+    card.querySelector(".dot").className="dot "+(s==="notrun"?"":s);
+    card.querySelectorAll(".statusbtn").forEach(b=>b.classList.toggle("sel",b.dataset.s===s));
+  }
+  updateProgress();applyFilters();
+}
+
+function exportCSV(){
+  const rows=[["ID","Capability Area","Title","Type","Severity","Capability","Expected Outcome","Status","Notes"]];
+  CATEGORIES.forEach(c=>{(TESTS[c.key]||[]).forEach(sc=>{
+    rows.push([sc.id,c.name,sc.title,sc.type,sc.sev,sc.cap,sc.outcome,
+      progress[sc.id]||"notrun",notes[sc.id]||""]);
+  });});
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="dfc-cspm-poc-results.csv";
+  a.click();
+}
+
+document.addEventListener("click",e=>{
+  const copy=e.target.closest(".copy");
+  if(copy){
+    const code=copy.parentElement.querySelector("code").textContent;
+    navigator.clipboard.writeText(code).then(()=>{
+      copy.textContent="Copied";copy.classList.add("ok");
+      setTimeout(()=>{copy.textContent="Copy";copy.classList.remove("ok");},1400);
+    });
+    return;
+  }
+  const sb=e.target.closest(".statusbtn");
+  if(sb){setStatus(sb.closest(".scenario").dataset.id,sb.dataset.s);return;}
+  const head=e.target.closest(".sc-head");
+  if(head){head.parentElement.classList.toggle("open");return;}
+  const nav=e.target.closest(".nav a");
+  if(nav){const t=document.getElementById(nav.dataset.target);
+    if(t)t.scrollIntoView({behavior:"smooth",block:"start"});return;}
+});
+document.addEventListener("input",e=>{
+  if(e.target.classList.contains("sc-notes")){
+    const id=e.target.closest(".scenario").dataset.id;
+    notes[id]=e.target.value;
+    localStorage.setItem(LS_NOTES,JSON.stringify(notes));
+  }
+});
+document.getElementById("search").addEventListener("input",e=>{filters.q=e.target.value;applyFilters();});
+function wireChips(containerId,key){
+  document.getElementById(containerId).addEventListener("click",e=>{
+    const chip=e.target.closest(".chip");if(!chip)return;
+    const val=chip.dataset[key];
+    chip.classList.toggle("on");
+    if(filters[key].has(val))filters[key].delete(val);else filters[key].add(val);
+    applyFilters();
+  });
+}
+wireChips("sevFilters","sev");
+wireChips("typeFilters","type");
+wireChips("statusFilters","status");
+document.getElementById("expandAll").addEventListener("click",()=>
+  document.querySelectorAll(".scenario").forEach(s=>s.classList.add("open")));
+document.getElementById("collapseAll").addEventListener("click",()=>
+  document.querySelectorAll(".scenario").forEach(s=>s.classList.remove("open")));
+document.getElementById("exportBtn").addEventListener("click",exportCSV);
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Clear all Pass/Fail results and notes saved in this browser?")){
+    progress={};notes={};
+    localStorage.removeItem(LS_PROG);localStorage.removeItem(LS_NOTES);
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

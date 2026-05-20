@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defender for Cloud &mdash; DevOps Repo &amp; Provisioning Security (Code-to-Cloud)</title>
+<style>
+:root{
+  --bg:#0e1217; --panel:#161c24; --panel2:#1d2530; --panel3:#252f3d;
+  --line:#2c3744; --line2:#3a4756;
+  --text:#e6edf3; --muted:#93a1b3; --muted2:#6b7888;
+  --accent:#3b9dff; --accent2:#4cc2ff;
+  --high:#f85149; --medium:#f0a020; --low:#3b9dff;
+  --green:#3fb950; --purple:#a371f7; --teal:#2dd4bf;
+  --pass:#3fb950; --fail:#f85149; --notrun:#5a6675;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;
+}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+a{color:var(--accent2)}
+.app{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+  width:262px;flex:0 0 262px;background:var(--panel);border-right:1px solid var(--line);
+  position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px;
+}
+.brand{font-weight:700;font-size:15px}
+.brand span{color:var(--accent2)}
+.brand-sub{color:var(--muted2);font-size:11.5px;margin:2px 0 16px}
+.nav-sect{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin:14px 6px 6px}
+.nav a{
+  display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;
+  color:var(--muted);text-decoration:none;font-size:12.7px;cursor:pointer;border-left:2px solid transparent;
+}
+.nav a:hover{background:var(--panel2);color:var(--text)}
+.nav a.active{background:var(--panel2);color:var(--text);border-left-color:var(--accent)}
+.nav a .n{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--muted2);min-width:20px}
+.lab-progress{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-top:12px}
+.lab-progress .pct{font-size:17px;font-weight:700}
+.lab-progress .lbl{font-size:10.5px;color:var(--muted)}
+.pbar{height:5px;background:var(--panel3);border-radius:4px;overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;background:var(--pass)}
+
+/* Main */
+.content{flex:1;min-width:0;padding:30px 46px 110px;max-width:1180px}
+header.top h1{font-size:23px;font-weight:700;line-height:1.3}
+header.top .tagline{color:var(--muted);margin-top:8px;font-size:13.5px;max-width:880px}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pill{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--muted);background:var(--panel)}
+.pill.acc{border-color:var(--accent);color:var(--accent2)}
+
+section.doc{margin-top:40px;scroll-margin-top:24px}
+.sec-num{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--accent2)}
+section.doc h2{font-size:20px;font-weight:700;margin:4px 0 6px}
+section.doc h3{font-size:15.5px;font-weight:650;margin:22px 0 7px;color:var(--text)}
+section.doc h4{font-size:13px;font-weight:650;margin:14px 0 5px;color:var(--accent2)}
+section.doc p{margin:9px 0;color:var(--muted)}
+section.doc p.lead{font-size:14.5px;color:#c4d0dd;margin:10px 0 4px}
+section.doc strong{color:var(--text);font-weight:650}
+section.doc ul,section.doc ol{margin:9px 0 9px 24px}
+section.doc li{margin:5px 0;color:var(--muted)}
+section.doc li strong{color:var(--text)}
+.hr{height:1px;background:var(--line);margin:34px 0}
+
+/* notes */
+.note{border-radius:8px;padding:11px 14px;margin:12px 0;font-size:12.8px;border:1px solid}
+.note .nt{font-weight:700;display:block;margin-bottom:2px}
+.note-info{background:rgba(59,157,255,.08);border-color:rgba(59,157,255,.35);color:#bcd9f5}
+.note-tip{background:rgba(63,185,80,.08);border-color:rgba(63,185,80,.35);color:#b6e6bf}
+.note-warn{background:rgba(248,81,73,.09);border-color:rgba(248,81,73,.4);color:#f3b6b3}
+.note-key{background:rgba(163,113,247,.08);border-color:rgba(163,113,247,.38);color:#d8c8f5}
+
+/* tables */
+table.tbl{border-collapse:collapse;width:100%;margin:12px 0;font-size:12.3px}
+table.tbl th,table.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+table.tbl th{background:var(--panel2);color:var(--accent2);font-weight:600}
+table.tbl td{color:var(--muted)}
+table.tbl td strong{color:var(--text)}
+.yes{color:var(--green);font-weight:700}
+.no{color:var(--high);font-weight:700}
+.part{color:var(--medium);font-weight:700}
+
+/* code */
+.cb{position:relative;margin:9px 0}
+.cb pre{background:#0a0d12;border:1px solid var(--line);border-radius:7px;padding:12px 13px;
+  overflow-x:auto;font-size:12px;line-height:1.55}
+.cb code{color:#cfe3f5;white-space:pre}
+.cb .copy{position:absolute;top:6px;right:6px;background:var(--panel3);border:1px solid var(--line2);
+  color:var(--muted);font-size:10.5px;padding:3px 8px;border-radius:5px;cursor:pointer}
+.cb .copy:hover{color:var(--text);border-color:var(--accent)}
+.cb .copy.ok{color:var(--pass);border-color:var(--pass)}
+code.ic{background:var(--panel3);padding:1px 5px;border-radius:4px;font-size:11.5px;color:#cfe3f5}
+
+/* diagrams */
+.diagram{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:18px 18px 8px;margin:16px 0;overflow-x:auto}
+.diagram svg{width:100%;height:auto;min-width:720px;display:block}
+.dgm-cap{font-size:11.5px;color:var(--muted2);text-align:center;margin:6px 0 10px;font-style:italic}
+
+/* feature grid */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:12px;margin:14px 0}
+.feat{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:13px 15px}
+.feat .ico{font-size:18px}
+.feat h4{margin:6px 0 4px;color:var(--text);font-size:13px}
+.feat p{font-size:12.3px;margin:3px 0;color:var(--muted)}
+
+/* layer legend chips */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:8px 2px 2px;font-size:11px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* glossary */
+.gloss{margin:10px 0}
+.gloss dt{font-weight:700;color:var(--accent2);margin-top:11px;font-size:12.8px}
+.gloss dd{margin:2px 0 0;color:var(--muted);font-size:12.6px}
+
+/* lab cards */
+.scenario{background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-bottom:9px;overflow:hidden}
+.sc-head{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer}
+.sc-head:hover{background:var(--panel2)}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;background:var(--notrun)}
+.dot.pass{background:var(--pass)}
+.dot.fail{background:var(--fail)}
+.sc-id{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted2);flex:0 0 58px}
+.sc-title{font-weight:600;font-size:13.4px;flex:1;min-width:0}
+.badge{font-size:10px;padding:2px 9px;border-radius:11px;font-weight:600;white-space:nowrap;
+  background:var(--panel3);color:var(--muted)}
+.chev{color:var(--muted2);font-size:11px;transition:transform .15s}
+.scenario.open .chev{transform:rotate(90deg)}
+.sc-body{display:none;padding:6px 16px 16px;border-top:1px solid var(--line)}
+.scenario.open .sc-body{display:block}
+.sc-body h5{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);margin:14px 0 5px}
+.sc-body p.d{color:var(--muted);font-size:13px}
+.goal{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:9px 12px;margin:12px 0;font-size:12.6px}
+.goal .k{color:var(--muted2);font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+ol.steps{margin-left:20px}
+ol.steps li{margin:8px 0;font-size:12.9px;color:var(--text)}
+.expected{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.3);border-radius:7px;
+  padding:9px 12px;font-size:12.5px;color:#bfe6c6;margin-top:8px}
+.sc-foot{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.statusbtn{background:var(--panel2);border:1px solid var(--line2);color:var(--muted);
+  padding:6px 13px;border-radius:6px;font-size:11.5px;cursor:pointer}
+.statusbtn:hover{color:var(--text)}
+.statusbtn.sel[data-s="pass"]{background:var(--pass);border-color:var(--pass);color:#06200b}
+.statusbtn.sel[data-s="fail"]{background:var(--fail);border-color:var(--fail);color:#fff}
+.toolbar{display:flex;gap:8px;margin:10px 0 16px;flex-wrap:wrap}
+.btn{background:var(--panel3);border:1px solid var(--line2);color:var(--text);
+  padding:7px 12px;border-radius:7px;font-size:12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+footer.foot{color:var(--muted2);font-size:11.5px;border-top:1px solid var(--line);margin-top:40px;padding-top:16px}
+
+@media (max-width:900px){
+  .sidebar{display:none}
+  .content{padding:20px}
+  .diagram svg{min-width:680px}
+}
+@media print{
+  .sidebar{display:none}.content{max-width:none}
+  .sc-body{display:block!important}
+  body{background:#fff;color:#111}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span>Defender for Cloud</span></div>
+    <div class="brand-sub">DevOps Repo &amp; Provisioning Security &mdash; Deep Dive</div>
+    <div class="nav" id="nav">
+      <div class="nav-sect">Use case</div>
+      <a data-t="use-case"><span class="n">1</span>The use case</a>
+      <a data-t="architecture"><span class="n">2</span>Architecture</a>
+      <a data-t="process-flow"><span class="n">3</span>Process flow</a>
+      <div class="nav-sect">How it works</div>
+      <a data-t="connectors"><span class="n">4</span>Repository connectors &amp; GitLab</a>
+      <a data-t="provisioning"><span class="n">5</span>Provisioning &amp; IaC security</a>
+      <a data-t="code-analysis"><span class="n">6</span>Code &amp; dependency analysis</a>
+      <a data-t="ai-remediation"><span class="n">7</span>AI-powered remediation</a>
+      <a data-t="code-to-cloud"><span class="n">8</span>Code-to-cloud &amp; attack paths</a>
+      <div class="nav-sect">Apply it</div>
+      <a data-t="walkthrough"><span class="n">9</span>Hands-on walkthrough</a>
+      <a data-t="considerations"><span class="n">10</span>Considerations &amp; gotchas</a>
+      <a data-t="glossary"><span class="n">11</span>Glossary</a>
+      <div class="lab-progress">
+        <div class="pct" id="labPct">0%</div>
+        <div class="lbl">Walkthrough: <span id="labDone">0</span>/<span id="labTotal">0</span> steps</div>
+        <div class="pbar"><i id="labBar" style="width:0"></i></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="top">
+      <h1>Securing the DevOps repository &rarr; provisioning &rarr; cloud pipeline</h1>
+      <div class="tagline">A single-use-case deep dive into Microsoft Defender for Cloud's <strong>DevOps security</strong> and
+        <strong>code-to-cloud</strong> capabilities &mdash; how a commit in a GitLab, GitHub or Azure DevOps repository is
+        scanned, how infrastructure-as-code provisioning is hardened, how AI identifies and remediates vulnerabilities,
+        and how a code finding is traced all the way to a running cloud resource holding PII / PCI data.</div>
+      <div class="pillrow">
+        <span class="pill acc">Use case: Code-to-Cloud</span>
+        <span class="pill">DevOps security</span>
+        <span class="pill">IaC / provisioning</span>
+        <span class="pill">AI remediation</span>
+        <span class="pill">Attack paths to PII/PCI</span>
+      </div>
+    </header>
+
+    <!-- ===================== 1. USE CASE ===================== -->
+    <section class="doc" id="use-case">
+      <div class="sec-num">SECTION 1</div>
+      <h2>The use case</h2>
+      <p class="lead">Most posture tools can tell you that a storage account is unencrypted. The harder, more valuable
+        question is: <strong>which line of code, in which repository, provisioned that storage account &mdash; and does
+        it hold regulated data?</strong> This deep dive is about closing that loop.</p>
+
+      <h3>What we are validating</h3>
+      <p>This evaluation focuses on one end-to-end scenario rather than a broad feature sweep: protecting the path that
+        runs from a developer's commit, through infrastructure-as-code (IaC) <strong>provisioning</strong>, into live
+        cloud resources. The concrete requirements driving the test:</p>
+      <ul>
+        <li><strong>Live and production environments.</strong> DevOps connectors auto-discover every repository in an
+          organization &mdash; including the repos that provision production &mdash; so the evaluation reflects real,
+          running estates, not just a sandbox.</li>
+        <li><strong>Containers used for test scenarios.</strong> Container images built in the pipeline are scanned and
+          mapped from registry to running workload, so container risk is part of the same code-to-cloud story.</li>
+        <li><strong>Beyond detection &mdash; the protection part.</strong> Detecting an unencrypted resource is table
+          stakes. This use case exercises the <em>protective</em> controls: blocking a pull request, breaking a build,
+          secret push-protection, and required reviewers &mdash; stopping the misconfiguration before it ever provisions.</li>
+        <li><strong>DevOps platform coverage, including GitLab.</strong> The estate spans more than one SCM. GitLab
+          integration is explicitly in scope &mdash; Section 4 gives the accurate, current picture of what the GitLab
+          connector does and does not do.</li>
+        <li><strong>Data types &mdash; the file attack path to PII / PCI.</strong> The goal is to follow a finding to
+          where it actually matters: a resource that ends up exposing personally identifiable information or
+          cardholder (PCI) data, surfaced as an attack path.</li>
+        <li><strong>Malicious code &amp; code analysis.</strong> Static analysis (SAST), dependency and container
+          scanning, and malware analysis on artifacts &mdash; identifying vulnerable or dangerous code in the repo.</li>
+        <li><strong>AI-assisted vulnerability detection &amp; automated remediation.</strong> Using the AI capabilities
+          to not only <em>find</em> vulnerabilities in code and IaC but to <em>generate the fix</em> &mdash; an
+          auto-created pull request a developer reviews and merges.</li>
+      </ul>
+
+      <div class="note note-key"><span class="nt">The core idea: &ldquo;shift left&rdquo; meets &ldquo;code-to-cloud&rdquo;</span>
+        Defender for Cloud works in two directions at once. <strong>Shift left:</strong> it scans code and IaC inside the
+        pipeline so risk is caught before deployment. <strong>Code-to-cloud:</strong> it correlates a running cloud
+        resource back to the exact repository, file and template that created it. The result is a closed loop &mdash;
+        a risky cloud resource can be traced to its source, and a source fix can be proven to remove the cloud risk.</p>
+      </div>
+
+      <h3>Detection vs. protection &mdash; why the distinction matters</h3>
+      <table class="tbl">
+        <thead><tr><th style="width:34%">Capability</th><th>Detection (visibility)</th><th>Protection (prevention)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>IaC misconfiguration</strong></td><td>Recommendation: &ldquo;repositories should have IaC scanning findings resolved&rdquo;</td><td>Break the build on high severity; block the PR; require two-reviewer approval before merge</td></tr>
+          <tr><td><strong>Exposed secret</strong></td><td>Recommendation: &ldquo;repositories should have secret scanning findings resolved&rdquo;</td><td>Secret <em>push protection</em> &mdash; the commit containing the secret is rejected at push time</td></tr>
+          <tr><td><strong>Code vulnerability</strong></td><td>Code-scanning alert (CodeQL / SAST analyzers)</td><td>PR annotation blocks reviewer sign-off; AI-generated fix merged before release</td></tr>
+          <tr><td><strong>Provisioned cloud risk</strong></td><td>Attack path: internet-exposed resource with sensitive data</td><td>Fix applied at the IaC source so the resource is never provisioned insecurely again</td></tr>
+        </tbody>
+      </table>
+      <p>The left column is what every posture tool offers. This use case is built to demonstrate the right column.</p>
+    </section>
+
+    <!-- ===================== 2. ARCHITECTURE ===================== -->
+    <section class="doc" id="architecture">
+      <div class="sec-num">SECTION 2</div>
+      <h2>Architecture &mdash; how it fits together</h2>
+      <p>Five layers cooperate. Source platforms host the code and IaC; scanners run inside the pipeline (or agentlessly);
+        a DevOps connector ingests the results into Defender for Cloud; Defender for Cloud correlates everything in the
+        cloud security graph; and the provisioned cloud estate is the thing ultimately being protected. Two flows wrap
+        around the stack &mdash; <strong>code-to-cloud mapping</strong> down the right, and the
+        <strong>AI-powered remediation</strong> feedback loop up the left.</p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 1120 900" role="img" aria-label="Architecture diagram">
+          <defs>
+            <marker id="ar" markerWidth="10" markerHeight="10" refX="7" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 Z" fill="#6b7888"/></marker>
+            <marker id="arB" markerWidth="10" markerHeight="10" refX="7" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 Z" fill="#4cc2ff"/></marker>
+            <marker id="arG" markerWidth="10" markerHeight="10" refX="7" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 Z" fill="#3fb950"/></marker>
+          </defs>
+          <style>
+            text{font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+            .t{fill:#e6edf3;font-weight:650} .s{fill:#9aa8b8} .chip{fill:#cfe3f5;font-weight:600}
+            .lbl{fill:#6b7888;font-size:11px;letter-spacing:1.4px;font-weight:700}
+            .flow{fill:#4cc2ff;font-size:11.5px;font-weight:700} .flowg{fill:#3fb950;font-size:11.5px;font-weight:700}
+          </style>
+
+          <!-- Band 1: source -->
+          <text class="lbl" x="120" y="44">SOURCE &mdash; DEVOPS PLATFORMS</text>
+          <rect x="120" y="58" width="278" height="104" rx="9" fill="#16243a" stroke="#3b9dff" stroke-width="1.5"/>
+          <text class="t" x="259" y="98" text-anchor="middle" font-size="15">GitLab</text>
+          <text class="s" x="259" y="120" text-anchor="middle" font-size="11">Groups &amp; projects</text>
+          <text class="s" x="259" y="138" text-anchor="middle" font-size="11">Repos &middot; IaC &middot; CI/CD</text>
+          <rect x="420" y="58" width="278" height="104" rx="9" fill="#16243a" stroke="#3b9dff" stroke-width="1.5"/>
+          <text class="t" x="559" y="98" text-anchor="middle" font-size="15">GitHub</text>
+          <text class="s" x="559" y="120" text-anchor="middle" font-size="11">Organizations &amp; repos</text>
+          <text class="s" x="559" y="138" text-anchor="middle" font-size="11">Repos &middot; IaC &middot; Actions</text>
+          <rect x="720" y="58" width="278" height="104" rx="9" fill="#16243a" stroke="#3b9dff" stroke-width="1.5"/>
+          <text class="t" x="859" y="98" text-anchor="middle" font-size="15">Azure DevOps</text>
+          <text class="s" x="859" y="120" text-anchor="middle" font-size="11">Organizations &amp; projects</text>
+          <text class="s" x="859" y="138" text-anchor="middle" font-size="11">Repos &middot; IaC &middot; Pipelines</text>
+
+          <!-- arrows band1 -> band2 -->
+          <line x1="259" y1="162" x2="259" y2="204" stroke="#6b7888" stroke-width="1.6" marker-end="url(#ar)"/>
+          <line x1="559" y1="162" x2="559" y2="204" stroke="#6b7888" stroke-width="1.6" marker-end="url(#ar)"/>
+          <line x1="859" y1="162" x2="859" y2="204" stroke="#6b7888" stroke-width="1.6" marker-end="url(#ar)"/>
+
+          <!-- Band 2: scanning -->
+          <text class="lbl" x="120" y="194">SECURITY SCANNING IN THE PIPELINE</text>
+          <rect x="120" y="206" width="878" height="128" rx="9" fill="#221a33" stroke="#a371f7" stroke-width="1.5"/>
+          <text class="t" x="559" y="234" text-anchor="middle" font-size="13.5">Microsoft Security DevOps (MSDO) &middot; Agentless code scanning &middot; GitHub Advanced Security</text>
+          <g font-size="11">
+            <rect x="140" y="256" width="160" height="56" rx="7" fill="#2b2142" stroke="#5a4a7a"/>
+            <text class="chip" x="220" y="280" text-anchor="middle">IaC scan</text>
+            <text class="s" x="220" y="297" text-anchor="middle" font-size="10">ARM/Bicep/TF</text>
+            <rect x="316" y="256" width="160" height="56" rx="7" fill="#2b2142" stroke="#5a4a7a"/>
+            <text class="chip" x="396" y="280" text-anchor="middle">Code / SAST</text>
+            <text class="s" x="396" y="297" text-anchor="middle" font-size="10">CodeQL &amp; analyzers</text>
+            <rect x="492" y="256" width="160" height="56" rx="7" fill="#2b2142" stroke="#5a4a7a"/>
+            <text class="chip" x="572" y="280" text-anchor="middle">Secrets</text>
+            <text class="s" x="572" y="297" text-anchor="middle" font-size="10">GHAS / GHAzDO</text>
+            <rect x="668" y="256" width="160" height="56" rx="7" fill="#2b2142" stroke="#5a4a7a"/>
+            <text class="chip" x="748" y="280" text-anchor="middle">Dependencies</text>
+            <text class="s" x="748" y="297" text-anchor="middle" font-size="10">OSS / Dependabot</text>
+            <rect x="844" y="256" width="154" height="56" rx="7" fill="#2b2142" stroke="#5a4a7a"/>
+            <text class="chip" x="921" y="280" text-anchor="middle">Containers</text>
+            <text class="s" x="921" y="297" text-anchor="middle" font-size="10">Trivy / images</text>
+          </g>
+          <line x1="559" y1="334" x2="559" y2="376" stroke="#6b7888" stroke-width="1.6" marker-end="url(#ar)"/>
+
+          <!-- Band 3: connector -->
+          <rect x="330" y="378" width="458" height="72" rx="9" fill="#0e2a33" stroke="#4cc2ff" stroke-width="1.5"/>
+          <text class="t" x="559" y="408" text-anchor="middle" font-size="13.5">Defender for Cloud DevOps connector</text>
+          <text class="s" x="559" y="428" text-anchor="middle" font-size="11">securityConnectors resource &mdash; ingests SARIF findings &amp; posture</text>
+          <line x1="559" y1="450" x2="559" y2="492" stroke="#6b7888" stroke-width="1.6" marker-end="url(#ar)"/>
+
+          <!-- Band 4: Defender for Cloud -->
+          <text class="lbl" x="120" y="484">MICROSOFT DEFENDER FOR CLOUD</text>
+          <rect x="120" y="496" width="878" height="168" rx="9" fill="#0f2a1e" stroke="#3fb950" stroke-width="1.5"/>
+          <g font-size="11">
+            <rect x="140" y="540" width="160" height="104" rx="7" fill="#15331f" stroke="#2f6b3f"/>
+            <text class="chip" x="220" y="572" text-anchor="middle">DevOps security</text>
+            <text class="s" x="220" y="592" text-anchor="middle" font-size="10">Inventory &amp;</text>
+            <text class="s" x="220" y="606" text-anchor="middle" font-size="10">recommendations</text>
+            <text class="s" x="220" y="624" text-anchor="middle" font-size="10">PR annotations</text>
+            <rect x="316" y="540" width="160" height="104" rx="7" fill="#15331f" stroke="#2f6b3f"/>
+            <text class="chip" x="396" y="572" text-anchor="middle">Cloud security</text>
+            <text class="chip" x="396" y="587" text-anchor="middle">graph</text>
+            <text class="s" x="396" y="610" text-anchor="middle" font-size="10">Correlates code</text>
+            <text class="s" x="396" y="624" text-anchor="middle" font-size="10">&harr; cloud</text>
+            <rect x="492" y="540" width="160" height="104" rx="7" fill="#15331f" stroke="#2f6b3f"/>
+            <text class="chip" x="572" y="572" text-anchor="middle">Attack path</text>
+            <text class="chip" x="572" y="587" text-anchor="middle">analysis</text>
+            <text class="s" x="572" y="610" text-anchor="middle" font-size="10">Exploitable</text>
+            <text class="s" x="572" y="624" text-anchor="middle" font-size="10">risk chains</text>
+            <rect x="668" y="540" width="160" height="104" rx="7" fill="#15331f" stroke="#2f6b3f"/>
+            <text class="chip" x="748" y="572" text-anchor="middle">Cloud security</text>
+            <text class="chip" x="748" y="587" text-anchor="middle">explorer</text>
+            <text class="s" x="748" y="610" text-anchor="middle" font-size="10">Graph queries</text>
+            <text class="s" x="748" y="624" text-anchor="middle" font-size="10">&ldquo;Provisioned by&rdquo;</text>
+            <rect x="844" y="540" width="154" height="104" rx="7" fill="#15331f" stroke="#2f6b3f"/>
+            <text class="chip" x="921" y="572" text-anchor="middle">DSPM</text>
+            <text class="s" x="921" y="594" text-anchor="middle" font-size="10">Sensitive-data</text>
+            <text class="s" x="921" y="608" text-anchor="middle" font-size="10">discovery</text>
+            <text class="s" x="921" y="626" text-anchor="middle" font-size="10">PII / PCI</text>
+          </g>
+          <text class="t" x="559" y="524" text-anchor="middle" font-size="12.5">Cloud Security Posture Management &mdash; correlation, prioritization, attack paths</text>
+          <line x1="559" y1="664" x2="559" y2="706" stroke="#6b7888" stroke-width="1.6" marker-end="url(#ar)"/>
+
+          <!-- Band 5: cloud estate -->
+          <text class="lbl" x="120" y="696">PROVISIONED CLOUD ESTATE</text>
+          <rect x="120" y="708" width="878" height="112" rx="9" fill="#2a2418" stroke="#f0a020" stroke-width="1.5"/>
+          <g font-size="11">
+            <rect x="140" y="752" width="196" height="50" rx="7" fill="#3a2f17" stroke="#f85149"/>
+            <text class="chip" x="238" y="773" text-anchor="middle" fill="#f3b6b3">Storage &mdash; PII / PCI</text>
+            <text class="s" x="238" y="789" text-anchor="middle" font-size="10">sensitive data store</text>
+            <rect x="354" y="752" width="196" height="50" rx="7" fill="#3a2f17" stroke="#a07a2a"/>
+            <text class="chip" x="452" y="773" text-anchor="middle">SQL Database</text>
+            <text class="s" x="452" y="789" text-anchor="middle" font-size="10">managed data</text>
+            <rect x="568" y="752" width="196" height="50" rx="7" fill="#3a2f17" stroke="#a07a2a"/>
+            <text class="chip" x="666" y="773" text-anchor="middle">Containers / AKS</text>
+            <text class="s" x="666" y="789" text-anchor="middle" font-size="10">running workloads</text>
+            <rect x="782" y="752" width="196" height="50" rx="7" fill="#3a2f17" stroke="#a07a2a"/>
+            <text class="chip" x="880" y="773" text-anchor="middle">Virtual machines</text>
+            <text class="s" x="880" y="789" text-anchor="middle" font-size="10">compute</text>
+          </g>
+          <text class="t" x="559" y="736" text-anchor="middle" font-size="12.5">Resources provisioned by the IaC in the repositories above</text>
+
+          <!-- code-to-cloud mapping (right) -->
+          <polyline points="998,110 1066,110 1066,777 1000,777" fill="none" stroke="#4cc2ff"
+            stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arB)"/>
+          <text class="flow" x="1086" y="445" text-anchor="middle" transform="rotate(90 1086 445)">CODE-TO-CLOUD MAPPING</text>
+
+          <!-- AI remediation loop (left) -->
+          <polyline points="120,576 54,576 54,110 120,110" fill="none" stroke="#3fb950"
+            stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arG)"/>
+          <text class="flowg" x="36" y="343" text-anchor="middle" transform="rotate(-90 36 343)">AI-POWERED REMEDIATION (PULL REQUEST)</text>
+        </svg>
+        <div class="legend">
+          <span><i style="background:#3b9dff"></i>Source platforms</span>
+          <span><i style="background:#a371f7"></i>Pipeline scanning</span>
+          <span><i style="background:#4cc2ff"></i>Connector / ingestion</span>
+          <span><i style="background:#3fb950"></i>Defender for Cloud</span>
+          <span><i style="background:#f0a020"></i>Provisioned cloud</span>
+        </div>
+      </div>
+      <div class="dgm-cap">Figure 1 &mdash; Architecture of the DevOps repo &rarr; provisioning &rarr; cloud security pipeline.</div>
+
+      <h3>Layer by layer</h3>
+      <div class="fgrid">
+        <div class="feat"><div class="ico">🗂️</div><h4>1 &middot; Source platforms</h4>
+          <p>GitLab groups, GitHub organizations and Azure DevOps organizations hold the application code, the IaC
+            templates that define provisioning, and the CI/CD pipeline definitions.</p></div>
+        <div class="feat"><div class="ico">🔬</div><h4>2 &middot; Pipeline scanning</h4>
+          <p>Microsoft Security DevOps (MSDO), agentless code scanning, and GitHub Advanced Security run IaC, SAST,
+            secret, dependency and container analysis &mdash; results normalized to SARIF.</p></div>
+        <div class="feat"><div class="ico">🔌</div><h4>3 &middot; DevOps connector</h4>
+          <p>A <code class="ic">securityConnectors</code> resource in Azure links the SCM to Defender for Cloud,
+            auto-discovers repositories, and ingests findings and posture data.</p></div>
+        <div class="feat"><div class="ico">🛡️</div><h4>4 &middot; Defender for Cloud</h4>
+          <p>DevOps security recommendations, the cloud security graph, attack path analysis, cloud security explorer
+            and DSPM correlate code findings with the running estate.</p></div>
+        <div class="feat"><div class="ico">☁️</div><h4>5 &middot; Provisioned estate</h4>
+          <p>The storage accounts, databases, containers and VMs that the IaC creates &mdash; the assets whose exposure
+            of PII / PCI data is the real risk being managed.</p></div>
+        <div class="feat"><div class="ico">🔁</div><h4>Two wrap-around flows</h4>
+          <p><strong>Code-to-cloud mapping</strong> links a provisioned resource back to its template; the
+            <strong>AI remediation loop</strong> returns generated fixes to the repo as pull requests.</p></div>
+      </div>
+    </section>
+
+    <!-- ===================== 3. PROCESS FLOW ===================== -->
+    <section class="doc" id="process-flow">
+      <div class="sec-num">SECTION 3</div>
+      <h2>Process flow &mdash; a finding's journey</h2>
+      <p>The architecture above is static structure. This is the dynamic story: what happens, in order, from the moment
+        a developer commits code to the moment Defender for Cloud confirms the provisioned resource is safe &mdash; and
+        how the loop feeds back.</p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 1120 500" role="img" aria-label="Process flow diagram">
+          <defs>
+            <marker id="pa" markerWidth="10" markerHeight="10" refX="7" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 Z" fill="#6b7888"/></marker>
+            <marker id="paG" markerWidth="10" markerHeight="10" refX="7" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 Z" fill="#3fb950"/></marker>
+          </defs>
+          <style>
+            text{font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+            .pt{fill:#e6edf3;font-weight:650;font-size:12.5px}
+            .pc{fill:#9aa8b8;font-size:10.3px}
+            .pn{fill:#0e1217;font-weight:800;font-size:13px}
+          </style>
+
+          <!-- Row A: stages 1-4 -->
+          <g>
+            <rect x="40" y="60" width="232" height="120" rx="10" fill="#16243a" stroke="#3b9dff" stroke-width="1.5"/>
+            <circle cx="66" cy="86" r="15" fill="#3b9dff"/><text class="pn" x="66" y="91" text-anchor="middle">1</text>
+            <text class="pt" x="95" y="91">Commit &amp; PR</text>
+            <text class="pc" x="58" y="124">Developer pushes app code,</text>
+            <text class="pc" x="58" y="139">IaC templates and manifests</text>
+            <text class="pc" x="58" y="154">to a connected repository.</text>
+
+            <rect x="310" y="60" width="232" height="120" rx="10" fill="#221a33" stroke="#a371f7" stroke-width="1.5"/>
+            <circle cx="336" cy="86" r="15" fill="#a371f7"/><text class="pn" x="336" y="91" text-anchor="middle">2</text>
+            <text class="pt" x="365" y="91">Pipeline scan</text>
+            <text class="pc" x="328" y="124">MSDO / agentless scanning /</text>
+            <text class="pc" x="328" y="139">GHAS run IaC, SAST, secret,</text>
+            <text class="pc" x="328" y="154">dependency &amp; container checks.</text>
+
+            <rect x="580" y="60" width="232" height="120" rx="10" fill="#221a33" stroke="#a371f7" stroke-width="1.5"/>
+            <circle cx="606" cy="86" r="15" fill="#a371f7"/><text class="pn" x="606" y="91" text-anchor="middle">3</text>
+            <text class="pt" x="635" y="91">Findings raised</text>
+            <text class="pc" x="598" y="124">Misconfigurations, code flaws,</text>
+            <text class="pc" x="598" y="139">exposed secrets and vulnerable</text>
+            <text class="pc" x="598" y="154">dependencies are identified.</text>
+
+            <rect x="850" y="60" width="232" height="120" rx="10" fill="#0f2a1e" stroke="#3fb950" stroke-width="1.5"/>
+            <circle cx="876" cy="86" r="15" fill="#3fb950"/><text class="pn" x="876" y="91" text-anchor="middle">4</text>
+            <text class="pt" x="905" y="91">Surface to dev</text>
+            <text class="pc" x="868" y="124">PR annotations + DevOps</text>
+            <text class="pc" x="868" y="139">security recommendations in</text>
+            <text class="pc" x="868" y="154">Defender for Cloud.</text>
+          </g>
+
+          <!-- Row B: stages 5-8 -->
+          <g>
+            <rect x="850" y="300" width="232" height="120" rx="10" fill="#0f2a1e" stroke="#3fb950" stroke-width="1.5"/>
+            <circle cx="876" cy="326" r="15" fill="#3fb950"/><text class="pn" x="876" y="331" text-anchor="middle">5</text>
+            <text class="pt" x="905" y="331">AI remediation</text>
+            <text class="pc" x="868" y="364">Copilot Autofix &amp; Security</text>
+            <text class="pc" x="868" y="379">Copilot generate validated</text>
+            <text class="pc" x="868" y="394">fix pull requests.</text>
+
+            <rect x="580" y="300" width="232" height="120" rx="10" fill="#16243a" stroke="#3b9dff" stroke-width="1.5"/>
+            <circle cx="606" cy="326" r="15" fill="#3b9dff"/><text class="pn" x="606" y="331" text-anchor="middle">6</text>
+            <text class="pt" x="635" y="331">Fix merged</text>
+            <text class="pc" x="598" y="364">Reviewed fixes merged; gates</text>
+            <text class="pc" x="598" y="379">(push protection, required</text>
+            <text class="pc" x="598" y="394">reviewers) block residual risk.</text>
+
+            <rect x="310" y="300" width="232" height="120" rx="10" fill="#2a2418" stroke="#f0a020" stroke-width="1.5"/>
+            <circle cx="336" cy="326" r="15" fill="#f0a020"/><text class="pn" x="336" y="331" text-anchor="middle">7</text>
+            <text class="pt" x="365" y="331">Secure provisioning</text>
+            <text class="pc" x="328" y="364">IaC provisions cloud resources</text>
+            <text class="pc" x="328" y="379">from the corrected, gated</text>
+            <text class="pc" x="328" y="394">templates.</text>
+
+            <rect x="40" y="300" width="232" height="120" rx="10" fill="#0f2a1e" stroke="#3fb950" stroke-width="1.5"/>
+            <circle cx="66" cy="326" r="15" fill="#3fb950"/><text class="pn" x="66" y="331" text-anchor="middle">8</text>
+            <text class="pt" x="95" y="331">Code-to-cloud</text>
+            <text class="pc" x="58" y="364">Defender maps resources to</text>
+            <text class="pc" x="58" y="379">code, builds attack paths,</text>
+            <text class="pc" x="58" y="394">flags PII / PCI exposure.</text>
+          </g>
+
+          <!-- arrows row A -->
+          <line x1="272" y1="120" x2="306" y2="120" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <line x1="542" y1="120" x2="576" y2="120" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <line x1="812" y1="120" x2="846" y2="120" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <!-- 4 -> 5 -->
+          <line x1="966" y1="180" x2="966" y2="296" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <!-- arrows row B -->
+          <line x1="846" y1="360" x2="816" y2="360" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <line x1="576" y1="360" x2="546" y2="360" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <line x1="306" y1="360" x2="276" y2="360" stroke="#6b7888" stroke-width="1.7" marker-end="url(#pa)"/>
+          <!-- feedback 8 -> 1 -->
+          <polyline points="40,360 18,360 18,120 36,120" fill="none" stroke="#3fb950" stroke-width="1.8"
+            stroke-dasharray="6 4" marker-end="url(#paG)"/>
+          <text x="464" y="464" text-anchor="middle" fill="#3fb950" font-size="11.5" font-weight="700"
+            font-family="-apple-system,Segoe UI,sans-serif">Continuous shift-left feedback loop &mdash; the next commit starts clean</text>
+        </svg>
+        <div class="legend">
+          <span><i style="background:#3b9dff"></i>Developer action</span>
+          <span><i style="background:#a371f7"></i>Pipeline scanning</span>
+          <span><i style="background:#3fb950"></i>Defender for Cloud / AI</span>
+          <span><i style="background:#f0a020"></i>Cloud provisioning</span>
+        </div>
+      </div>
+      <div class="dgm-cap">Figure 2 &mdash; Process flow from commit to verified-secure provisioning, with the feedback loop.</div>
+
+      <h3>Stage by stage</h3>
+      <ol>
+        <li><strong>Commit &amp; pull request.</strong> A developer pushes a change &mdash; application code, an IaC
+          template, a Kubernetes manifest, a pipeline definition &mdash; and opens a pull request against a protected
+          branch in a connected repository.</li>
+        <li><strong>Pipeline security scan.</strong> The CI/CD pipeline triggers the scanners. With MSDO this is an
+          explicit pipeline task / GitHub Action; with agentless code scanning it happens connector-side on a daily
+          cadence with no pipeline edits. IaC, SAST, secret, dependency and container analyzers all run.</li>
+        <li><strong>Findings raised.</strong> Each analyzer emits results, normalized into SARIF: IaC
+          misconfigurations, code vulnerabilities, hard-coded secrets, vulnerable open-source dependencies, vulnerable
+          container images.</li>
+        <li><strong>Surface to the developer.</strong> Findings appear in two places at once &mdash; inline
+          <strong>pull request annotations</strong> on the exact offending lines (Azure DevOps &amp; GitHub), and as
+          <strong>DevOps security recommendations</strong> in Defender for Cloud for the security team.</li>
+        <li><strong>AI-assisted remediation.</strong> For code-scanning alerts, <strong>GitHub Copilot Autofix</strong>
+          proposes a validated code fix. For IaC misconfigurations, <strong>Microsoft Security Copilot</strong> can
+          generate a corrective pull request directly from the recommendation.</li>
+        <li><strong>Fix merged.</strong> A developer reviews and merges the fix. Protective gates &mdash; secret push
+          protection, required reviewers, branch protection, build-breaking on high severity &mdash; stop anything
+          still risky from progressing.</li>
+        <li><strong>Secure provisioning.</strong> The corrected IaC runs and provisions the cloud resources. Because the
+          template was fixed at source, the resource is created in a compliant state &mdash; not remediated after the
+          fact.</li>
+        <li><strong>Code-to-cloud correlation.</strong> Defender for Cloud maps the running resource back to the
+          template that created it, evaluates its posture, and &mdash; if it is exposed and holds PII / PCI data &mdash;
+          raises an attack path that names the originating repository and file.</li>
+      </ol>
+      <p>Stage 8 feeds back into stage 1: the attack path (or a security campaign) creates work items in the repo, so the
+        next commit starts from a cleaner baseline. That loop is the point &mdash; posture stops being a quarterly audit
+        and becomes a property of the development process.</p>
+    </section>
+
+    <!-- ===================== 4. CONNECTORS ===================== -->
+    <section class="doc" id="connectors">
+      <div class="sec-num">SECTION 4</div>
+      <h2>Repository connectors &mdash; and the GitLab reality</h2>
+      <p class="lead">Everything starts with a connector. Defender for Cloud connects to three source platforms, and the
+        choice of platform materially affects which capabilities you get &mdash; this is the section that answers the
+        &ldquo;GitLab isn't quite there&rdquo; question with specifics.</p>
+
+      <h3>How a connector works</h3>
+      <p>A DevOps connector is an Azure resource of type <code class="ic">Microsoft.Security/securityConnectors</code>.
+        You create it from <strong>Defender for Cloud &rarr; Environment settings &rarr; Add environment</strong>. It
+        authorizes against the SCM, <strong>auto-discovers every repository</strong> in the selected scope, and ingests
+        findings and posture data. There is no per-repository cost &mdash; autodiscovery across an entire organization
+        or group is included.</p>
+      <table class="tbl">
+        <thead><tr><th style="width:18%">Connector</th><th style="width:24%">Onboards (scope)</th><th>Onboarding outline</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Azure DevOps</strong></td><td>Organizations &rarr; all projects &amp; repositories</td>
+            <td>Add environment &rarr; Azure DevOps &rarr; name / subscription / resource group / region &rarr;
+              Configure access &rarr; Authorize &rarr; choose <em>all existing</em> or <em>all existing + future</em>
+              organizations &rarr; Review &amp; generate. The Container Mapping extension is installed automatically.</td></tr>
+          <tr><td><strong>GitHub</strong></td><td>Organizations &rarr; all repositories</td>
+            <td>Add environment &rarr; GitHub &rarr; install &amp; authorize the GitHub app &rarr; select
+              organizations / repositories &rarr; Review &amp; generate.</td></tr>
+          <tr><td><strong>GitLab</strong></td><td>Groups &rarr; all subgroups &amp; projects</td>
+            <td>Add environment &rarr; GitLab &rarr; Configure access &rarr; Authorize &rarr; choose <em>all existing
+              groups</em> or <em>all existing + future groups</em> &rarr; Review &amp; generate. Requires GitLab
+              <strong>Ultimate</strong>; covers GitLab SaaS (gitlab.com).</td></tr>
+        </tbody>
+      </table>
+      <div class="note note-info"><span class="nt">Live &amp; production estates</span>
+        Because a connector auto-discovers <em>all</em> repositories in scope, the repos that build and provision
+        production are in scope from the moment you connect. To keep the PoC controlled you can connect at a narrower
+        scope (a single test group/org) first, then widen to &ldquo;all existing + future&rdquo; once you are happy.</p>
+      </div>
+
+      <h3>GitLab: generally available &mdash; but with a real parity gap</h3>
+      <p>The GitLab connector is <strong>generally available</strong>, not preview. It is genuinely useful: GitLab
+        projects get full <em>finding detection</em> &mdash; code vulnerabilities, IaC misconfigurations, exposed
+        secrets and open-source dependency vulnerabilities &mdash; and those findings are queryable in cloud security
+        explorer. So &ldquo;GitLab isn't supported&rdquo; would be wrong. But &ldquo;GitLab isn't quite there&rdquo; is
+        <em>partly fair</em>: several advanced and contextualization features are not available for GitLab today.</p>
+      <table class="tbl">
+        <thead><tr><th style="width:40%">Capability</th><th>Azure DevOps</th><th>GitHub</th><th>GitLab</th></tr></thead>
+        <tbody>
+          <tr><td>Connect &amp; autodiscover repos</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Code / SAST finding recommendations</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>IaC misconfiguration recommendations</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Secret scanning finding recommendations</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Dependency / OSS finding recommendations</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>DevOps environment posture recommendations <span style="font-size:10px;color:#6b7888">(branch protection, pipeline / secret access policies, admin count)</span></td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Pull request annotations</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Code-to-cloud mapping &mdash; containers</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Code-to-cloud mapping &mdash; IaC templates</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+          <tr><td>Attack path analysis for DevOps findings</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="part">Not documented</td></tr>
+        </tbody>
+      </table>
+      <div class="note note-warn"><span class="nt">GitLab verdict for the evaluation</span>
+        GitLab is GA and fully functional for <strong>detecting</strong> code, secret, IaC and dependency risk, and
+        those findings <em>are</em> queryable. What GitLab lacks today is the <strong>contextualization and protection
+        surface</strong>: no posture-configuration recommendations, no in-line PR annotations, and no container / IaC
+        code-to-cloud mapping. If the PoC's headline scenarios are PR annotations and IaC-template attack paths, run
+        them on an <strong>Azure DevOps</strong> connector (the only platform with IaC code-to-cloud mapping), and treat
+        GitLab as a detection-grade connector. Note also: IaC code-to-cloud mapping is Azure-DevOps-only even versus
+        GitHub.</p>
+      </div>
+
+      <h3>What the connector raises &mdash; DevOps security recommendations</h3>
+      <p>Findings surface as recommendations under <strong>Defender for Cloud &rarr; Recommendations</strong> and the
+        <strong>DevOps security</strong> blade. Representative names:</p>
+      <ul>
+        <li><strong>Finding-resolution</strong> (all three platforms): &ldquo;&hellip; repositories should have
+          <em>code scanning</em> findings resolved&rdquo;, &ldquo;&hellip; <em>secret scanning</em> findings
+          resolved&rdquo;, &ldquo;&hellip; <em>infrastructure as code scanning</em> findings resolved&rdquo;,
+          &ldquo;&hellip; <em>dependency vulnerability scanning</em> findings resolved&rdquo;.</li>
+        <li><strong>Posture configuration</strong> (Azure DevOps &amp; GitHub only): &ldquo;GitHub repositories should
+          have protection policies for default branch enabled&rdquo;, &ldquo;&hellip; force pushes to default branch
+          disabled&rdquo;, &ldquo;Azure DevOps service connections shouldn't grant access to all pipelines&rdquo;,
+          &ldquo;GitHub organizations should have base permissions set to no permissions or read&rdquo;, &ldquo;&hellip;
+          should have more than one administrator&rdquo;, &ldquo;&hellip; secret scanning push protection
+          enabled&rdquo;, &ldquo;Azure DevOps repositories should have GitHub Advanced Security for Azure DevOps
+          enabled&rdquo;.</li>
+      </ul>
+      <div class="note note-info"><span class="nt">A scoring quirk worth knowing</span>
+        DevOps security recommendations do <strong>not</strong> contribute to Secure Score. Track DevOps progress
+        through the DevOps security blade and governance rules rather than expecting the score needle to move.</p>
+      </div>
+
+      <h3>Licensing &mdash; what is free and what needs Defender CSPM</h3>
+      <table class="tbl">
+        <thead><tr><th style="width:34%">Tier</th><th>What you get for DevOps</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Foundational CSPM</strong> <span style="font-size:10px;color:#6b7888">(free)</span></td>
+            <td>Connect Azure DevOps, GitHub and GitLab; DevOps inventory; recommendations for environment
+              misconfigurations and for code / IaC / secret / dependency findings. Repos onboarded at no extra cost.</td></tr>
+          <tr><td><strong>Defender CSPM</strong> <span style="font-size:10px;color:#6b7888">(paid)</span></td>
+            <td>Adds pull request annotations, code-to-cloud mapping (containers &amp; IaC templates), attack path
+              analysis, cloud security explorer, and contextualized risk prioritization for DevOps findings.</td></tr>
+        </tbody>
+      </table>
+      <p>For this use case the interesting half &mdash; code-to-cloud and attack paths &mdash; is in the paid plan, and
+        Defender CSPM must be enabled on an Azure / AWS / GCP environment in the <em>same tenant</em> as the DevOps
+        connector.</p>
+    </section>
+
+    <!-- ===================== 5. PROVISIONING / IaC ===================== -->
+    <section class="doc" id="provisioning">
+      <div class="sec-num">SECTION 5</div>
+      <h2>Provisioning security &mdash; scanning infrastructure as code</h2>
+      <p class="lead">&ldquo;Provisioning&rdquo; in a modern estate <em>is</em> infrastructure as code. An ARM, Bicep or
+        Terraform file is the blueprint for a cloud resource. Scan the blueprint and you stop the misconfiguration
+        before a single resource exists.</p>
+
+      <h3>Why scan IaC instead of waiting for the resource</h3>
+      <p>If a Terraform file declares a storage account with public blob access, a posture tool will eventually flag the
+        deployed account &mdash; <em>after</em> it is live and possibly already holding data. Scanning the IaC catches
+        the same defect while it is still a few lines in a pull request, where the fix is cheap, reviewable and cannot
+        leak anything. This is the &ldquo;shift left&rdquo; half of the loop.</p>
+
+      <h3>What runs the scan &mdash; Microsoft Security DevOps (MSDO)</h3>
+      <p><strong>Microsoft Security DevOps (MSDO)</strong> is a command-line application that installs, configures and
+        runs a curated set of open-source static-analysis analyzers, then aggregates everything into a single SARIF
+        report. It ships two ways:</p>
+      <ul>
+        <li><strong>Azure DevOps extension</strong> &mdash; the <code class="ic">MicrosoftSecurityDevOps@1</code>
+          pipeline task.</li>
+        <li><strong>GitHub Action</strong> &mdash; <code class="ic">microsoft/security-devops-action</code>.</li>
+      </ul>
+      <p>There is also <strong>agentless code scanning</strong> (preview): the connector scans repositories on a daily
+        cadence with no pipeline edits at all &mdash; lower friction, but it cannot break a build.</p>
+      <h4>MSDO pipeline task &mdash; Azure DevOps</h4>
+      <div class="cb"><pre><code># azure-pipelines.yml
+steps:
+  - task: MicrosoftSecurityDevOps@1
+    displayName: 'Microsoft Security DevOps scan'
+    inputs:
+      categories: 'IaC,secrets,code,containers'   # scope the scan
+      # breakOnSeverity is enforced via branch policy / pipeline gates</code></pre><button class="copy">Copy</button></div>
+      <h4>MSDO GitHub Action</h4>
+      <div class="cb"><pre><code># .github/workflows/msdevopssec.yml
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Microsoft Security DevOps
+        uses: microsoft/security-devops-action@latest
+        id: msdo
+        with:
+          categories: 'IaC,code,containers'
+      - name: Upload results to the Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.msdo.outputs.sarifFile }}</code></pre><button class="copy">Copy</button></div>
+
+      <h3>The IaC analyzers and what they cover</h3>
+      <table class="tbl">
+        <thead><tr><th style="width:24%">Analyzer</th><th style="width:40%">Targets</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Template Analyzer</strong> (incl. <strong>PSRule</strong>)</td><td>ARM, Bicep</td>
+            <td>Microsoft's first-party analyzer for Azure-native IaC.</td></tr>
+          <tr><td><strong>Terrascan</strong></td><td>Terraform (HCL2), Kubernetes, Helm v3, Kustomize, Dockerfile, CloudFormation</td>
+            <td>Broad multi-format policy scanning.</td></tr>
+          <tr><td><strong>Checkov</strong></td><td>Terraform &amp; plans, CloudFormation, AWS SAM, Kubernetes, Helm, Kustomize, Dockerfile, Serverless, Bicep, ARM, OpenAPI</td>
+            <td>Widest format coverage of the three IaC analyzers.</td></tr>
+          <tr><td><strong>IaCFileScanner</strong></td><td>Terraform, CloudFormation, ARM, Bicep</td>
+            <td>Not a policy scanner &mdash; it maps an IaC template to the cloud resource it provisions (see Section 8).</td></tr>
+        </tbody>
+      </table>
+      <p>Scope a run to provisioning checks only with <code class="ic">categories: 'IaC'</code>. Findings surface as
+        <strong>&ldquo;&hellip; repositories should have infrastructure as code scanning findings resolved&rdquo;</strong>
+        (severity Medium) and, on Azure DevOps and GitHub, as inline PR annotations.</p>
+
+      <h3>From detection to protection</h3>
+      <p>The protective controls turn an IaC finding into a hard gate:</p>
+      <ul>
+        <li><strong>Break the build</strong> &mdash; fail the pipeline on findings at or above a severity threshold so a
+          misconfigured template cannot proceed to <code class="ic">terraform apply</code> / deployment.</li>
+        <li><strong>Branch policy</strong> &mdash; require the MSDO scan to pass before a PR can complete, and require
+          minimum two-reviewer approval for code pushes.</li>
+        <li><strong>PR annotations</strong> &mdash; the finding is pinned to the offending line so the reviewer cannot
+          miss it before approving.</li>
+      </ul>
+      <div class="note note-tip"><span class="nt">This is the &ldquo;above and beyond detection&rdquo; part</span>
+        Detection tells you the storage account will be public. Protection &mdash; build-breaking plus a branch policy
+        &mdash; means the public storage account is never provisioned at all. Same finding, completely different
+        outcome.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 6. CODE ANALYSIS ===================== -->
+    <section class="doc" id="code-analysis">
+      <div class="sec-num">SECTION 6</div>
+      <h2>Code &amp; dependency analysis &mdash; finding malicious and vulnerable code</h2>
+      <p class="lead">IaC governs the infrastructure; the application code governs what runs on it. This section covers
+        static code analysis (SAST), secret scanning, dependency / open-source scanning and malware analysis of build
+        artifacts.</p>
+
+      <h3>Two sources of code findings &mdash; and how they differ</h3>
+      <p>This is the most commonly misunderstood part of Defender for Cloud DevOps security. Code-vulnerability findings
+        can come from <em>either</em> of two engines, and they are not the same:</p>
+      <div class="fgrid">
+        <div class="feat"><div class="ico">🧰</div><h4>MSDO open-source analyzers</h4>
+          <p>The analyzers bundled in MSDO / agentless scanning. Surface in the <strong>DevOps security</strong> blade
+            <strong>without</strong> a GitHub Advanced Security licence. Good breadth, lighter depth.</p></div>
+        <div class="feat"><div class="ico">🔎</div><h4>GitHub Advanced Security (GHAS / GHAzDO)</h4>
+          <p><strong>CodeQL</strong>-powered deep SAST, plus native secret scanning and dependency review. Required for
+            native GitHub <em>code-scanning alerts</em> and for code / secret / dependency findings on Azure DevOps
+            repos. This is the engine behind Copilot Autofix.</p></div>
+      </div>
+
+      <h3>The MSDO code &amp; container analyzers</h3>
+      <table class="tbl">
+        <thead><tr><th style="width:22%">Analyzer</th><th style="width:30%">Target</th><th>Category</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Bandit</strong></td><td>Python source</td><td>Code / SAST</td></tr>
+          <tr><td><strong>ESLint</strong></td><td>JavaScript source</td><td>Code / SAST</td></tr>
+          <tr><td><strong>BinSkim</strong></td><td>Compiled binaries (Windows PE, ELF)</td><td>Binary analysis &mdash; insecure compiler / linker settings</td></tr>
+          <tr><td><strong>Trivy</strong></td><td>Container images, filesystems, dependencies</td><td>Vulnerability &amp; dependency scanning</td></tr>
+          <tr><td><strong>AntiMalware</strong></td><td>Build artifacts (Windows, via Defender for Endpoint)</td><td>Malware scan &mdash; catches malicious files in the repo / artifacts</td></tr>
+        </tbody>
+      </table>
+      <p>The <strong>AntiMalware</strong> analyzer is the direct answer to &ldquo;test for malicious code&rdquo;: it
+        scans artifacts for known malware during the pipeline run. The SAST analyzers (Bandit, ESLint, and CodeQL via
+        GHAS) cover the other half &mdash; <em>vulnerable</em> code: injection flaws, unsafe deserialization, weak
+        crypto, path traversal and so on.</p>
+
+      <h3>Secret scanning &mdash; an important currency note</h3>
+      <p>The legacy <strong>CredScan</strong> secret analyzer was <strong>deprecated in September 2023</strong> and
+        removed from MSDO. Repository secret scanning is now delivered through <strong>GitHub Advanced Security</strong>
+        (GitHub) and <strong>GitHub Advanced Security for Azure DevOps</strong> (Azure DevOps). The decisive protective
+        control here is <strong>secret push protection</strong>: a commit that contains a detected secret is
+        <em>rejected at push time</em> &mdash; the secret never reaches the remote repository at all.</p>
+      <div class="note note-warn"><span class="nt">Don't plan the PoC around CredScan</span>
+        If older guidance mentions CredScan as the MSDO secret tool, it is out of date. Validate secret scanning and
+        push protection through GHAS / GHAzDO instead.</p>
+      </div>
+
+      <h3>Dependency &amp; open-source component scanning</h3>
+      <p>Modern applications are mostly other people's code. Dependency scanning is delivered by GHAS / GHAzDO
+        (Dependabot and the dependency graph) and by <strong>Trivy</strong> within MSDO / agentless scanning. It flags
+        vulnerable open-source packages and surfaces the recommendation <strong>&ldquo;&hellip; repositories should have
+        dependency vulnerability scanning findings resolved&rdquo;</strong>. Dependabot can additionally open update
+        pull requests automatically.</p>
+
+      <h3>Where the findings land</h3>
+      <ul>
+        <li><strong>In the repo</strong> &mdash; GitHub Security tab code-scanning alerts; Azure DevOps Advanced
+          Security results; inline PR annotations.</li>
+        <li><strong>In Defender for Cloud</strong> &mdash; the DevOps security blade and recommendations
+          (&ldquo;&hellip; repositories should have code scanning findings resolved&rdquo;), aggregated across every
+          connected repository so a security team gets one cross-platform view.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 7. AI REMEDIATION ===================== -->
+    <section class="doc" id="ai-remediation">
+      <div class="sec-num">SECTION 7</div>
+      <h2>AI-powered detection &amp; automated remediation</h2>
+      <p class="lead">Finding a vulnerability is only half the value. The differentiating capability is AI that
+        <em>writes the fix</em> &mdash; turning a finding into a reviewed, mergeable pull request without a developer
+        starting from a blank editor.</p>
+
+      <p>There are <strong>two distinct AI remediation capabilities</strong> in this use case. They solve different
+        problems, use different engines, and are surfaced in different places. Keeping them separate avoids a lot of
+        confusion in an evaluation.</p>
+
+      <h3>A &middot; Microsoft Security Copilot &mdash; IaC remediation</h3>
+      <p>This targets <strong>infrastructure-as-code misconfigurations</strong>. From the recommendation
+        <strong>&ldquo;&hellip; repositories should have infrastructure as code scanning findings resolved&rdquo;</strong>
+        in Defender for Cloud:</p>
+      <ol>
+        <li>Open the IaC recommendation and select <strong>Reduce risk with Copilot</strong>.</li>
+        <li>Choose <strong>Help me remediate this recommendation</strong>.</li>
+        <li>Pick the specific failing security check.</li>
+        <li>Review the summary Copilot produces and select <strong>Submit</strong>.</li>
+        <li>Copilot <strong>auto-generates a pull request</strong> in the source repository that corrects the IaC
+          template &mdash; a developer reviews, approves and merges it.</li>
+      </ol>
+      <p>Generic (non-IaC) recommendations additionally support <strong>Summarize with Copilot</strong> and
+        <strong>Fix with Copilot</strong>, which produce a natural-language explanation and remediation guidance, with
+        an optional script to run.</p>
+      <div class="note note-info"><span class="nt">Requirements</span>
+        Security Copilot remediation requires Microsoft Security Copilot to be provisioned with
+        <strong>Security Compute Units (SCUs)</strong> and appropriate Copilot access in the tenant. Treat it as a
+        capability to enable deliberately for the PoC, not something on by default.</p>
+      </div>
+
+      <h3>B &middot; GitHub Copilot Autofix &mdash; code-scanning alerts</h3>
+      <p>This targets <strong>application code vulnerabilities</strong> &mdash; the CodeQL code-scanning alerts from
+        GitHub Advanced Security. It is part of the GHAS integration with Defender for Cloud (a capability set that was
+        significantly expanded in November 2025).</p>
+      <div class="fgrid">
+        <div class="feat"><div class="ico">🤖</div><h4>Copilot Autofix</h4>
+          <p>For a code-scanning alert, Copilot Autofix and the GitHub Copilot coding agent generate a
+            <strong>validated code fix</strong>, shown inside the GitHub Security tab for the developer to accept.</p></div>
+        <div class="feat"><div class="ico">📦</div><h4>Multi-fix merge</h4>
+          <p>Multiple individual fixes can be bundled into a <strong>single pull request</strong>, so a backlog of
+            alerts is cleared in one reviewable change instead of dozens.</p></div>
+        <div class="feat"><div class="ico">🎯</div><h4>Security Campaigns</h4>
+          <p>A security admin can launch a <strong>GitHub Security Campaign from Defender for Cloud</strong>,
+            prioritized by runtime context; assignees use the Copilot coding agent to fix at scale.</p></div>
+        <div class="feat"><div class="ico">🧭</div><h4>Runtime context in GHAS</h4>
+          <p>Defender for Cloud pushes runtime signals &mdash; Internet Exposure, Sensitive Data, Critical Resource,
+            Lateral Movement &mdash; <strong>into</strong> the GHAS dashboards so developers fix the alerts that matter
+            first. Status syncs both ways.</p></div>
+      </div>
+
+      <h3>Why this matters for the use case</h3>
+      <p>The requirement was &ldquo;use the AI features to identify vulnerabilities in code and automate their
+        remediation.&rdquo; Mapped to the two capabilities:</p>
+      <table class="tbl">
+        <thead><tr><th style="width:26%">Need</th><th>How it is met</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Identify vulnerabilities</strong></td><td>CodeQL SAST + MSDO analyzers (code), IaC analyzers (provisioning), GHAS secret &amp; dependency scanning &mdash; all aggregated in Defender for Cloud.</td></tr>
+          <tr><td><strong>Prioritize them</strong></td><td>Defender for Cloud runtime context (exposure, sensitive data, attack paths) is injected into GHAS so the riskiest alerts rise to the top.</td></tr>
+          <tr><td><strong>Automate remediation</strong></td><td>Copilot Autofix generates code fixes; Security Copilot generates IaC-fix pull requests; multi-fix PRs and Security Campaigns scale it across the estate.</td></tr>
+          <tr><td><strong>Keep a human in the loop</strong></td><td>Every AI fix is a <em>pull request</em> &mdash; reviewed, approved and merged by a developer. AI drafts; people decide.</td></tr>
+        </tbody>
+      </table>
+      <div class="note note-key"><span class="nt">The mental model</span>
+        AI here is a <strong>drafting assistant inside an existing review gate</strong>, not an autonomous actor. It
+        compresses the slowest step &mdash; writing the patch &mdash; while the merge decision, branch policy and
+        required reviewers stay exactly where they were. That is what makes auto-remediation safe to adopt.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 8. CODE-TO-CLOUD ===================== -->
+    <section class="doc" id="code-to-cloud">
+      <div class="sec-num">SECTION 8</div>
+      <h2>Code-to-cloud &mdash; attack paths to PII / PCI data</h2>
+      <p class="lead">This is where the use case pays off. A code finding on its own is noise; a code finding that can be
+        proven to expose cardholder data to the internet is an incident. Code-to-cloud is the correlation that turns one
+        into the other.</p>
+
+      <h3>The mapping &mdash; how code is linked to a running resource</h3>
+      <ul>
+        <li><strong>IaC template mapping.</strong> The <code class="ic">IaCFileScanner</code> analyzer records which
+          cloud resource each IaC template provisions (Terraform, CloudFormation, ARM, Bicep). Defender for Cloud can
+          then say &ldquo;this storage account was <em>provisioned by</em> <code class="ic">main.tf</code> in
+          repo X.&rdquo;</li>
+        <li><strong>Container image mapping.</strong> The container-mapping extension links an image built in a
+          pipeline to the registry it lands in and the Kubernetes workload that runs it.</li>
+        <li>Both require the MSDO extension and the <strong>Defender CSPM</strong> plan. IaC template mapping is
+          currently <strong>Azure DevOps only</strong>; container mapping is Azure DevOps and GitHub.</li>
+      </ul>
+
+      <h3>Querying the link &mdash; Cloud Security Explorer</h3>
+      <p>Once mapping data is in the cloud security graph, you can query it. Cloud security explorer ships a built-in
+        query &mdash; <strong>&ldquo;Cloud resources provisioned by IaC templates with high severity
+        misconfigurations&rdquo;</strong> &mdash; and exposes a <strong>&ldquo;Provisioned by&rdquo;</strong> filter so
+        you can pivot from any resource to its originating template, repository and file.</p>
+      <div class="cb"><pre><code># Cloud Security Explorer - query intent (built visually in the portal)
+Resource type:  Storage account
+  + filter:     Internet exposed
+  + filter:     Contains sensitive data        (DSPM - PII / PCI)
+  + filter:     Provisioned by  ->  IaC template with high-severity misconfiguration
+=> returns: exposed, sensitive storage accounts traceable to a specific repo + file</code></pre><button class="copy">Copy</button></div>
+
+      <h3>The file attack path to PII / PCI &mdash; worked example</h3>
+      <p>This is the &ldquo;file attack path / where we had PII, for example PCI data&rdquo; scenario, end to end:</p>
+      <table class="tbl">
+        <thead><tr><th style="width:14%">Step</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Code</strong></td><td>A Terraform file in a connected repo declares an Azure Storage account with public network access and anonymous blob access enabled.</td></tr>
+          <tr><td><strong>Provision</strong></td><td>The pipeline runs <code class="ic">terraform apply</code>; the storage account is created in the cloud, internet-reachable.</td></tr>
+          <tr><td><strong>Data lands</strong></td><td>An application writes customer records &mdash; names, card numbers &mdash; into a blob container.</td></tr>
+          <tr><td><strong>DSPM discovers</strong></td><td>Defender CSPM <strong>data-aware security posture</strong> (sensitive data discovery) scans the account and classifies it as containing <strong>PII / PCI</strong> data.</td></tr>
+          <tr><td><strong>Graph correlates</strong></td><td>The cloud security graph now holds three facts about one node: internet-exposed + contains sensitive data + provisioned by a known IaC template.</td></tr>
+          <tr><td><strong>Attack path</strong></td><td>Attack path analysis raises a path such as <em>&ldquo;Internet-exposed storage account with sensitive data is publicly accessible&rdquo;</em> &mdash; a single, high-priority, contextual finding.</td></tr>
+          <tr><td><strong>Trace to source</strong></td><td>Because of code-to-cloud mapping, the path names the originating repository, the IaC file, and (via CODEOWNERS) the responsible team. A one-click GitHub issue can be created carrying both the runtime and the SDLC context.</td></tr>
+          <tr><td><strong>Fix at source</strong></td><td>The fix is made in the Terraform file &mdash; ideally via an AI-generated PR &mdash; so the resource is never provisioned publicly again. Detection became prevention.</td></tr>
+        </tbody>
+      </table>
+      <div class="note note-tip"><span class="nt">Why the attack path beats a raw finding</span>
+        &ldquo;Storage account allows public access&rdquo; might be one of hundreds of recommendations. &ldquo;An
+        internet-exposed storage account holding PCI data, created by <code class="ic">infra/storage.tf</code> in the
+        payments repo&rdquo; is a single sentence a security lead can act on immediately &mdash; and hand to the exact
+        team that owns the file.</p>
+      </div>
+
+      <h3>Containers in the same picture</h3>
+      <p>The container test workloads follow the identical pattern: an image is scanned for vulnerabilities in the
+        pipeline, container mapping links image &rarr; registry &rarr; running pod, and an internet-exposed workload
+        running a vulnerable image &mdash; especially one with a path to a sensitive data store &mdash; becomes its own
+        attack path, traceable back to the Dockerfile and repo.</p>
+
+      <h3>Prerequisites &amp; boundaries</h3>
+      <ul>
+        <li><strong>Defender CSPM</strong> must be enabled on an Azure / AWS / GCP environment in the same tenant as the
+          DevOps connector &mdash; code-to-cloud, attack paths and cloud security explorer are paid-plan features.</li>
+        <li><strong>Sensitive data discovery (DSPM)</strong> must be turned on for the PII / PCI classification half of
+          the story.</li>
+        <li>IaC template code-to-cloud mapping is <strong>Azure DevOps only</strong> today; the GHAS code-to-cloud
+          integration is <strong>commercial clouds only</strong>.</li>
+        <li>Use only <strong>synthetic</strong> PII / PCI test data in the PoC &mdash; never real cardholder data.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== 9. WALKTHROUGH ===================== -->
+    <section class="doc" id="walkthrough">
+      <div class="sec-num">SECTION 9</div>
+      <h2>Hands-on walkthrough</h2>
+      <p>A guided lab that exercises the whole loop on a disposable test repository and subscription. Work top to bottom
+        &mdash; later steps build on earlier ones. Mark each step Pass / Fail; progress is saved in this browser.</p>
+      <div class="note note-warn"><span class="nt">Run this only in an isolated PoC environment</span>
+        These steps deliberately introduce misconfigurations, fake secrets and synthetic PII into a test repo and
+        subscription. Use a throwaway repository and a non-production subscription, and complete the cleanup notes.</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="expandAll">Expand all</button>
+        <button class="btn" id="collapseAll">Collapse all</button>
+        <button class="btn" id="exportBtn">Export CSV</button>
+        <button class="btn" id="printBtn">Print / PDF</button>
+        <button class="btn" id="resetBtn">Reset progress</button>
+      </div>
+      <div id="labList"></div>
+    </section>
+
+    <!-- ===================== 10. CONSIDERATIONS ===================== -->
+    <section class="doc" id="considerations">
+      <div class="sec-num">SECTION 10</div>
+      <h2>Considerations &amp; gotchas</h2>
+      <p>Practical points to keep the evaluation accurate and fair &mdash; especially in a multi-vendor comparison.</p>
+
+      <h3>Scoping a multi-vendor comparison</h3>
+      <p>When the same scenario is run against several vendors, compare like for like. The dimensions that actually
+        differentiate products on this use case:</p>
+      <ul>
+        <li><strong>SCM breadth.</strong> Does the tool connect Azure DevOps, GitHub <em>and</em> GitLab &mdash; and at
+          what feature parity? (See the GitLab matrix in Section 4.)</li>
+        <li><strong>Code-to-cloud correlation.</strong> Many tools detect IaC misconfigurations. Far fewer map a
+          <em>running</em> resource back to the exact template and repo that created it. That correlation is the test.</li>
+        <li><strong>Attack-path quality.</strong> Does the tool produce one contextual path (&ldquo;exposed + sensitive
+          + provisioned by repo X&rdquo;) or a flat list of unrelated findings?</li>
+        <li><strong>AI remediation.</strong> Does it merely <em>describe</em> a fix, or generate a reviewable pull
+          request? Code <em>and</em> IaC, or just one?</li>
+        <li><strong>Protection, not just detection.</strong> Build-breaking, PR blocking, secret push protection &mdash;
+          can the tool stop the bad change, or only report it afterwards?</li>
+      </ul>
+
+      <h3>The GitLab question &mdash; settled</h3>
+      <p>For an evaluation that includes GitLab: it is <strong>GA and reliable for detection</strong> (code, secrets,
+        IaC, dependencies) and those findings are queryable. It <strong>lacks</strong> posture-configuration
+        recommendations, PR annotations, and container / IaC code-to-cloud mapping. So run the headline code-to-cloud
+        and PR-annotation scenarios on <strong>Azure DevOps</strong>, and judge GitLab on detection coverage &mdash; not
+        on features Microsoft has not shipped for it yet. &ldquo;Isn't quite there&rdquo; is fair for advanced features,
+        unfair as a blanket statement.</p>
+
+      <h3>In-pipeline vs. agentless scanning</h3>
+      <table class="tbl">
+        <thead><tr><th style="width:24%">Aspect</th><th>In-pipeline (MSDO)</th><th>Agentless code scanning</th></tr></thead>
+        <tbody>
+          <tr><td>Setup</td><td>Add a task / Action to each pipeline</td><td>None &mdash; connector-side, zero pipeline edits</td></tr>
+          <tr><td>Cadence</td><td>Every build</td><td>Daily</td></tr>
+          <tr><td>Can break a build / block a PR</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Status</td><td>Generally available</td><td>Preview</td></tr>
+        </tbody>
+      </table>
+      <p>For the <em>protection</em> half of this use case you need in-pipeline MSDO &mdash; only it can fail a build.
+        Agentless is excellent for broad, low-friction visibility across many repos.</p>
+
+      <h3>Currency notes &mdash; things that have changed</h3>
+      <div class="note note-warn"><span class="nt">Verify these against your tenant</span>
+        <strong>CredScan</strong> (the old MSDO secret analyzer) was deprecated in September 2023 &mdash; secret
+        scanning is now GHAS / GHAzDO. <strong>Agentless code scanning</strong> is still in preview. The
+        <strong>GHAS &harr; Defender for Cloud</strong> integration, including agentic Copilot remediation and Security
+        Campaigns, was significantly expanded in November 2025. DevOps security features move fast &mdash; confirm
+        current state in Environment settings before drawing conclusions.</p>
+      </div>
+
+      <h3>Prerequisites checklist</h3>
+      <ul>
+        <li>A DevOps connector for each SCM in scope (Azure DevOps / GitHub / GitLab).</li>
+        <li><strong>Defender CSPM</strong> enabled on an Azure / AWS / GCP environment in the same tenant &mdash;
+          required for PR annotations, code-to-cloud mapping, attack paths and cloud security explorer.</li>
+        <li><strong>GitHub Advanced Security</strong> / <strong>GHAzDO</strong> for deep SAST, secret scanning and
+          Copilot Autofix.</li>
+        <li><strong>Sensitive data discovery (DSPM)</strong> enabled for the PII / PCI classification.</li>
+        <li><strong>Microsoft Security Copilot</strong> provisioned (SCUs) for AI IaC remediation.</li>
+        <li>The MSDO task / Action added to pipelines that need build-breaking protection.</li>
+      </ul>
+
+      <h3>Production-scope caution</h3>
+      <p>A connector discovers every repo in the selected org / group, production included. That is powerful but means
+        recommendations against production code appear immediately. Start the PoC on a narrow scope, confirm behavior,
+        then widen &mdash; and agree internally who triages production findings before they appear.</p>
+    </section>
+
+    <!-- ===================== 11. GLOSSARY ===================== -->
+    <section class="doc" id="glossary">
+      <div class="sec-num">SECTION 11</div>
+      <h2>Glossary</h2>
+      <dl class="gloss">
+        <dt>Agentless code scanning</dt><dd>Connector-side scanning of repositories on a daily cadence with no pipeline changes. Preview; cannot break a build.</dd>
+        <dt>Attack path analysis</dt><dd>A Defender CSPM capability that walks the cloud security graph to surface exploitable chains from an exposed entry point to a high-value asset.</dd>
+        <dt>Cloud security graph</dt><dd>The graph database in which Defender for Cloud correlates resources, code, identities, exposure and data &mdash; the substrate for attack paths and cloud security explorer.</dd>
+        <dt>Cloud security explorer</dt><dd>A visual query builder over the cloud security graph; includes a &ldquo;Provisioned by&rdquo; filter to pivot from a resource to its IaC template.</dd>
+        <dt>Code-to-cloud</dt><dd>The correlation that links a running cloud resource (or container) back to the repository, file and template that produced it.</dd>
+        <dt>CodeQL</dt><dd>The semantic code-analysis engine behind GitHub Advanced Security code scanning.</dd>
+        <dt>Copilot Autofix</dt><dd>GitHub Copilot capability that generates validated code fixes for code-scanning (CodeQL) alerts.</dd>
+        <dt>CredScan</dt><dd>The legacy MSDO secret analyzer &mdash; deprecated September 2023; replaced by GHAS / GHAzDO secret scanning.</dd>
+        <dt>Defender CSPM</dt><dd>The paid Cloud Security Posture Management plan; required for PR annotations, code-to-cloud mapping, attack paths and cloud security explorer.</dd>
+        <dt>DevOps connector</dt><dd>An Azure <code class="ic">securityConnectors</code> resource linking an SCM organization / group to Defender for Cloud.</dd>
+        <dt>DSPM</dt><dd>Data-aware security posture management &mdash; agentless discovery and classification of sensitive data (PII / PCI) in cloud data stores.</dd>
+        <dt>GHAS / GHAzDO</dt><dd>GitHub Advanced Security, and GitHub Advanced Security for Azure DevOps &mdash; the engines for CodeQL SAST, secret scanning and dependency review.</dd>
+        <dt>IaC</dt><dd>Infrastructure as Code &mdash; declarative templates (ARM, Bicep, Terraform, CloudFormation) that define how cloud resources are provisioned.</dd>
+        <dt>IaCFileScanner</dt><dd>The MSDO component that maps an IaC template to the cloud resource it provisions.</dd>
+        <dt>MSDO</dt><dd>Microsoft Security DevOps &mdash; a CLI that runs a curated set of security analyzers in a pipeline and aggregates results to SARIF.</dd>
+        <dt>PR annotation</dt><dd>A security finding shown inline on the affected lines of an open pull request (Azure DevOps &amp; GitHub).</dd>
+        <dt>Pull request</dt><dd>A proposed, reviewable change to a repository &mdash; the unit AI remediation produces and the gate protective controls enforce.</dd>
+        <dt>Push protection</dt><dd>A protective control that rejects a commit containing a detected secret at push time, before it reaches the remote.</dd>
+        <dt>SARIF</dt><dd>Static Analysis Results Interchange Format &mdash; the standard JSON format MSDO uses to normalize analyzer output.</dd>
+        <dt>Security Campaign</dt><dd>A coordinated remediation drive, launchable from Defender for Cloud, that assigns prioritized alerts to developers for Copilot-assisted fixing.</dd>
+        <dt>Security Copilot</dt><dd>Microsoft Security Copilot &mdash; the AI capability that generates IaC remediation pull requests from Defender for Cloud recommendations.</dd>
+        <dt>Shift left</dt><dd>Moving security checks earlier &mdash; into the repo and pipeline &mdash; so defects are caught before deployment.</dd>
+      </dl>
+    </section>
+
+    <footer class="foot">
+      Built for an internal Microsoft Defender for Cloud Proof-of-Concept. Capability behavior, feature parity and
+      AI-remediation features are based on Microsoft Learn documentation and evolve quickly &mdash; confirm against
+      Environment settings and the DevOps security blade in your own tenant. Walkthrough progress is saved in this
+      browser only.
+    </footer>
+  </main>
+</div>
+<script>
+/* ---- Walkthrough lab data ---- */
+const LAB=[
+ {id:"LAB-01",title:"Enable the CSPM foundations",focus:"Setup",
+  goal:"Defender CSPM, sensitive data discovery and a test resource group are ready.",
+  steps:[
+   ["Enable the Defender CSPM plan on the PoC subscription.","az security pricing create -n CloudPosture --tier Standard"],
+   ["In Environment settings > Defender CSPM > Settings, turn on **Sensitive data discovery** (DSPM).",""],
+   ["Create a resource group for the test cloud resources.","az group create --name DfC-DevOps-RG --location eastus"]
+  ],
+  expected:"Defender CSPM and Sensitive data discovery both show as On.",note:""},
+ {id:"LAB-02",title:"Connect a DevOps connector",focus:"Connector",
+  goal:"An Azure DevOps organization is connected (recommended for full code-to-cloud); optionally GitLab for comparison.",
+  steps:[
+   ["Open Defender for Cloud > Environment settings > **Add environment > Azure DevOps**.",""],
+   ["Name the connector, choose subscription / resource group / region, then Configure access.",""],
+   ["Authorize, select your test organization (or 'all existing'), and Review & generate.",""],
+   ["Optionally also connect a **GitLab** group to compare detection coverage (mind the parity gaps in Section 4).",""]
+  ],
+  expected:"The connector appears under Environment settings; repositories autodiscover within ~8 hours.",note:""},
+ {id:"LAB-03",title:"Add Microsoft Security DevOps to the pipeline",focus:"Scanning",
+  goal:"MSDO runs IaC, code, secret and container analysis on every build.",
+  steps:[
+   ["Install the **Microsoft Security DevOps** extension from the Azure DevOps Marketplace (or use the GitHub Action).",""],
+   ["Add the MSDO task to the pipeline YAML.","- task: MicrosoftSecurityDevOps@1\n  displayName: 'Microsoft Security DevOps scan'\n  inputs:\n    categories: 'IaC,code,secrets,containers'"],
+   ["Run the pipeline once to establish a baseline scan.",""]
+  ],
+  expected:"The pipeline runs the MSDO scan and publishes SARIF results.",note:""},
+ {id:"LAB-04",title:"Introduce an IaC misconfiguration",focus:"IaC / provisioning",
+  goal:"A deliberately insecure Terraform template triggers an IaC scanning finding.",
+  steps:[
+   ["Add a Terraform file that declares a publicly accessible storage account.","resource \"azurerm_storage_account\" \"poc\" {\n  name                            = \"dfcdevopspoc01\"\n  resource_group_name             = \"DfC-DevOps-RG\"\n  location                        = \"eastus\"\n  account_tier                    = \"Standard\"\n  account_replication_type        = \"LRS\"\n  allow_nested_items_to_be_public = true   # misconfiguration\n  public_network_access_enabled   = true   # misconfiguration\n}"],
+   ["Commit the file and run the pipeline so the IaC analyzers (Terrascan / Checkov) scan it.",""]
+  ],
+  expected:"The MSDO IaC scan flags the public-access misconfiguration.",
+  note:"This deliberately weakens posture — keep it in a disposable test repo and resource group."},
+ {id:"LAB-05",title:"Verify the IaC recommendation in Defender for Cloud",focus:"Detection",
+  goal:"The pipeline finding surfaces centrally in Defender for Cloud.",
+  steps:[
+   ["Open Defender for Cloud > **DevOps security** (or Recommendations).",""],
+   ["Locate **'... repositories should have infrastructure as code scanning findings resolved'** and open it.",""],
+   ["Confirm the affected repository, file and failing rule are listed.",""]
+  ],
+  expected:"The IaC recommendation lists the test repository and the storage Terraform file.",note:""},
+ {id:"LAB-06",title:"See the pull request annotation",focus:"Protection",
+  goal:"The finding blocks the developer inline, before merge.",
+  steps:[
+   ["Open a pull request that includes the misconfigured Terraform file.",""],
+   ["Confirm a **pull request annotation** appears on the offending lines.",""],
+   ["Add a branch policy that requires the MSDO scan to pass before the PR can complete.",""]
+  ],
+  expected:"The annotation is visible inline on the PR and the branch policy gates completion.",
+  note:"Pull request annotations are Azure DevOps / GitHub only — not GitLab."},
+ {id:"LAB-07",title:"Commit a code vulnerability",focus:"Code analysis",
+  goal:"A SAST analyzer flags vulnerable application code.",
+  steps:[
+   ["Add a small code change with a known-vulnerable pattern — untrusted input used to build a shell command.","# Python - flagged by Bandit / CodeQL as command injection\nimport os\ndef run(host):\n    os.system('ping -c 1 ' + host)   # untrusted input in a shell command"],
+   ["Commit and run the pipeline (and/or rely on GHAS code scanning).",""],
+   ["Check the GitHub Security tab / Azure DevOps Advanced Security and the Defender for Cloud code-scanning recommendation.",""]
+  ],
+  expected:"A code-scanning alert is raised and '... code scanning findings resolved' appears in DevOps security.",note:""},
+ {id:"LAB-08",title:"Commit an exposed secret",focus:"Secrets",
+  goal:"Secret scanning detects a hard-coded credential; push protection blocks it.",
+  steps:[
+   ["With GHAS / GHAzDO and **secret push protection** enabled, attempt to commit a file containing a dummy credential (use a clearly fake placeholder value, never a real secret).",""],
+   ["Confirm the push is **rejected** by secret push protection.",""],
+   ["If push protection is disabled, confirm the secret-scanning finding appears in DevOps security instead.",""]
+  ],
+  expected:"The commit containing the secret is blocked at push time, or a secret-scanning finding is raised.",note:""},
+ {id:"LAB-09",title:"Add a vulnerable dependency",focus:"Dependencies",
+  goal:"Dependency scanning flags a vulnerable open-source package.",
+  steps:[
+   ["Add an outdated, known-vulnerable package version to the project manifest (requirements.txt / package.json).",""],
+   ["Run the pipeline and let Dependabot + Trivy evaluate the dependency graph.",""]
+  ],
+  expected:"A dependency vulnerability finding appears and '... dependency vulnerability scanning findings resolved' is raised.",note:""},
+ {id:"LAB-10",title:"AI remediation for IaC — Security Copilot",focus:"AI remediation",
+  goal:"Security Copilot generates a pull request that fixes the IaC misconfiguration.",
+  steps:[
+   ["Open the IaC recommendation from LAB-05 and select **Reduce risk with Copilot**.",""],
+   ["Choose **Help me remediate this recommendation**, pick the failing check, review the summary and **Submit**.",""],
+   ["Open the auto-generated pull request in the repo and review the corrected Terraform.",""]
+  ],
+  expected:"Security Copilot opens a PR that sets the storage account to private; a developer reviews and merges it.",
+  note:"Requires Microsoft Security Copilot provisioned with Security Compute Units."},
+ {id:"LAB-11",title:"AI remediation for code — Copilot Autofix",focus:"AI remediation",
+  goal:"Copilot Autofix proposes a validated fix for the code-scanning alert.",
+  steps:[
+   ["Open the code-scanning alert from LAB-07 in the GitHub Security tab.",""],
+   ["Review the **Copilot Autofix** suggested fix and accept it into a pull request.",""],
+   ["Confirm the runtime context (internet exposure / sensitive data) from Defender for Cloud is shown alongside the alert.",""]
+  ],
+  expected:"Copilot Autofix generates a code fix; the alert closes once the fix is merged.",note:""},
+ {id:"LAB-12",title:"Observe code-to-cloud mapping",focus:"Code-to-cloud",
+  goal:"Defender for Cloud links a provisioned resource back to its IaC template.",
+  steps:[
+   ["Provision the storage account from the IaC (do this once with the unfixed template, deliberately).",""],
+   ["Open **Cloud Security Explorer** and run 'Cloud resources provisioned by IaC templates with high severity misconfigurations'.",""],
+   ["Confirm the storage account is returned with a **'Provisioned by'** link to the repository and file.",""]
+  ],
+  expected:"The storage account is traceable to the originating repository and Terraform file.",note:""},
+ {id:"LAB-13",title:"Build the attack path to PII / PCI",focus:"Attack path",
+  goal:"An exposed resource holding synthetic PII/PCI becomes an attack path traced to code.",
+  steps:[
+   ["Upload a file containing **synthetic** PII / PCI data (fake names and test card numbers) to the public storage account.",""],
+   ["Wait for sensitive data discovery (~24 hours), then open **Attack path analysis**.",""],
+   ["Locate the path for the internet-exposed storage account containing sensitive data; confirm it names the source repo / file.",""],
+   ["Create the one-click GitHub issue / work item directly from the attack path.",""]
+  ],
+  expected:"An attack path for the exposed, sensitive storage account is raised and traced to its IaC source.",
+  note:"Use synthetic test data only — never real cardholder or personal data."},
+ {id:"LAB-14",title:"Prove protection, not just detection",focus:"Protection",
+  goal:"A high-severity finding is blocked before it can merge or provision.",
+  steps:[
+   ["Re-introduce the IaC misconfiguration in a fresh pull request.",""],
+   ["Confirm the pipeline **breaks the build** on the high-severity IaC finding and the branch policy blocks PR completion.",""],
+   ["Apply the AI-generated fix, confirm the build passes, and merge.",""]
+  ],
+  expected:"The insecure template cannot merge or provision until it is fixed — detection has become prevention.",note:""}
+];
+
+/* ---- logic ---- */
+const LS_KEY="dfc-devops-lab-v1";
+let prog={};
+try{prog=JSON.parse(localStorage.getItem(LS_KEY))||{};}catch(e){prog={};}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function inl(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\{\{(.+?)\}\}/g,'<code class="ic">$1</code>');}
+function codeBlock(t){return '<div class="cb"><pre><code>'+esc(t)+'</code></pre><button class="copy">Copy</button></div>';}
+
+function labCard(x){
+  const st=prog[x.id]||"notrun";
+  let h='<div class="scenario" data-id="'+x.id+'">';
+  h+='<div class="sc-head"><span class="dot '+(st==="notrun"?"":st)+'"></span>';
+  h+='<span class="sc-id">'+esc(x.id)+'</span><span class="sc-title">'+esc(x.title)+'</span>';
+  h+='<span class="badge">'+esc(x.focus)+'</span><span class="chev">&#9656;</span></div>';
+  h+='<div class="sc-body">';
+  h+='<div class="goal"><span class="k">Goal</span><br>'+inl(x.goal)+'</div>';
+  h+='<h5>Steps</h5><ol class="steps">';
+  x.steps.forEach(s=>{h+='<li>'+inl(s[0])+(s[1]?codeBlock(s[1]):"")+'</li>';});
+  h+='</ol>';
+  h+='<h5>Expected result</h5><div class="expected">'+inl(x.expected)+'</div>';
+  if(x.note)h+='<div class="note note-warn" style="margin-top:8px">'+inl(x.note)+'</div>';
+  h+='<div class="sc-foot">';
+  h+='<button class="statusbtn'+(st==="pass"?" sel":"")+'" data-s="pass">&#10003; Pass</button>';
+  h+='<button class="statusbtn'+(st==="fail"?" sel":"")+'" data-s="fail">&#10007; Fail</button>';
+  h+='<button class="statusbtn'+(st==="notrun"?" sel":"")+'" data-s="notrun">Not run</button>';
+  h+='</div></div></div>';
+  return h;
+}
+function renderLab(){
+  document.getElementById("labList").innerHTML=LAB.map(labCard).join("");
+  updateLab();
+}
+function updateLab(){
+  let done=0;
+  LAB.forEach(x=>{if(prog[x.id]==="pass"||prog[x.id]==="fail")done++;});
+  const pct=Math.round(done/LAB.length*100);
+  document.getElementById("labPct").textContent=pct+"%";
+  document.getElementById("labDone").textContent=done;
+  document.getElementById("labTotal").textContent=LAB.length;
+  document.getElementById("labBar").style.width=pct+"%";
+}
+function setStatus(id,s){
+  if(s==="notrun")delete prog[id];else prog[id]=s;
+  localStorage.setItem(LS_KEY,JSON.stringify(prog));
+  const card=document.querySelector('.scenario[data-id="'+id+'"]');
+  if(card){
+    card.querySelector(".dot").className="dot "+(s==="notrun"?"":s);
+    card.querySelectorAll(".statusbtn").forEach(b=>b.classList.toggle("sel",b.dataset.s===s));
+  }
+  updateLab();
+}
+function exportCSV(){
+  const rows=[["ID","Title","Focus","Goal","Expected","Status"]];
+  LAB.forEach(x=>rows.push([x.id,x.title,x.focus,x.goal,x.expected,prog[x.id]||"notrun"]));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="dfc-devops-walkthrough-results.csv";a.click();
+}
+
+document.addEventListener("click",e=>{
+  const copy=e.target.closest(".copy");
+  if(copy){
+    navigator.clipboard.writeText(copy.parentElement.querySelector("code").textContent).then(()=>{
+      copy.textContent="Copied";copy.classList.add("ok");
+      setTimeout(()=>{copy.textContent="Copy";copy.classList.remove("ok");},1400);
+    });return;
+  }
+  const sb=e.target.closest(".statusbtn");
+  if(sb){setStatus(sb.closest(".scenario").dataset.id,sb.dataset.s);return;}
+  const head=e.target.closest(".sc-head");
+  if(head){head.parentElement.classList.toggle("open");return;}
+  const nav=e.target.closest(".nav a");
+  if(nav){const t=document.getElementById(nav.dataset.t);
+    if(t)t.scrollIntoView({behavior:"smooth",block:"start"});return;}
+});
+document.getElementById("expandAll").addEventListener("click",()=>
+  document.querySelectorAll(".scenario").forEach(s=>s.classList.add("open")));
+document.getElementById("collapseAll").addEventListener("click",()=>
+  document.querySelectorAll(".scenario").forEach(s=>s.classList.remove("open")));
+document.getElementById("exportBtn").addEventListener("click",exportCSV);
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Clear all walkthrough Pass/Fail progress saved in this browser?")){
+    prog={};localStorage.removeItem(LS_KEY);renderLab();
+  }
+});
+
+/* nav scroll-spy */
+const navLinks={};
+document.querySelectorAll(".nav a").forEach(a=>{navLinks[a.dataset.t]=a;});
+const spy=new IntersectionObserver(entries=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      Object.values(navLinks).forEach(a=>a.classList.remove("active"));
+      const a=navLinks[en.target.id];if(a)a.classList.add("active");
+    }
+  });
+},{rootMargin:"-15% 0px -75% 0px"});
+document.querySelectorAll("section.doc").forEach(s=>spy.observe(s));
+
+renderLab();
+</script>
+</body>
+</html>

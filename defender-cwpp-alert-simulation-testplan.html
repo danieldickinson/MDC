@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microsoft Defender for Cloud &mdash; CWPP Alert Simulation Test Plan</title>
+<style>
+:root{
+  --bg:#0e1217; --panel:#161c24; --panel2:#1d2530; --panel3:#252f3d;
+  --line:#2c3744; --line2:#3a4756;
+  --text:#e6edf3; --muted:#93a1b3; --muted2:#6b7888;
+  --accent:#3b9dff; --accent2:#4cc2ff;
+  --high:#f85149; --medium:#f0a020; --low:#3b9dff; --info:#8b98a8;
+  --exec:#3fb950; --reference:#a371f7; --pipeline:#2dd4bf;
+  --pass:#3fb950; --fail:#f85149; --notrun:#5a6675;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;
+}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+a{color:var(--accent2)}
+.app{display:flex;min-height:100vh}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:268px;flex:0 0 268px;background:var(--panel);border-right:1px solid var(--line);
+  position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px;
+}
+.brand{font-weight:700;font-size:15px;letter-spacing:.2px;margin-bottom:2px}
+.brand span{color:var(--accent2)}
+.brand-sub{color:var(--muted2);font-size:11.5px;margin-bottom:16px}
+.nav-progress{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 11px;margin-bottom:14px}
+.nav-progress .pct{font-size:20px;font-weight:700}
+.nav-progress .lbl{font-size:11px;color:var(--muted)}
+.pbar{height:6px;background:var(--panel3);border-radius:4px;overflow:hidden;margin-top:7px;display:flex}
+.pbar i{display:block;height:100%}
+.pbar .p{background:var(--pass)}
+.pbar .f{background:var(--fail)}
+.nav-sect{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin:14px 6px 6px}
+.nav a{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;
+  color:var(--text);text-decoration:none;font-size:13px;cursor:pointer;
+}
+.nav a:hover{background:var(--panel2)}
+.nav a .ico{width:18px;text-align:center;opacity:.85}
+.nav a .ct{margin-left:auto;font-size:10.5px;color:var(--muted2);background:var(--panel3);
+  padding:1px 7px;border-radius:10px;min-width:22px;text-align:center}
+.nav a.done .ct{background:rgba(63,185,80,.18);color:var(--pass)}
+
+/* ---------- Main ---------- */
+.content{flex:1;min-width:0;padding:26px 34px 90px;max-width:1180px}
+header.top h1{font-size:22px;font-weight:700;letter-spacing:.2px}
+header.top .tagline{color:var(--muted);margin-top:4px;font-size:13px}
+.meta-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.meta-row b{color:var(--text);font-weight:600}
+
+/* ---------- Toolbar ---------- */
+.toolbar{
+  position:sticky;top:0;z-index:20;background:rgba(14,18,23,.95);backdrop-filter:blur(6px);
+  border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:20px 0 24px;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+}
+.toolbar input.search{
+  flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line2);color:var(--text);
+  padding:8px 11px;border-radius:7px;font-size:13px;
+}
+.toolbar input.search:focus{outline:none;border-color:var(--accent)}
+.fgroup{display:flex;gap:5px;flex-wrap:wrap}
+.chip{
+  background:var(--panel2);border:1px solid var(--line2);color:var(--muted);
+  padding:5px 10px;border-radius:20px;font-size:11.5px;cursor:pointer;user-select:none;
+}
+.chip:hover{color:var(--text)}
+.chip.on{color:#fff;border-color:transparent}
+.chip.on[data-sev="High"]{background:var(--high)}
+.chip.on[data-sev="Medium"]{background:var(--medium);color:#1a1a1a}
+.chip.on[data-sev="Low"]{background:var(--low)}
+.chip.on[data-sev="Informational"]{background:var(--info);color:#1a1a1a}
+.chip.on[data-type="Executable"]{background:var(--exec);color:#0c1a0e}
+.chip.on[data-type="Reference"]{background:var(--reference)}
+.chip.on[data-type="Pipeline"]{background:var(--pipeline);color:#06201c}
+.chip.on[data-status]{background:var(--accent)}
+.btn{
+  background:var(--panel3);border:1px solid var(--line2);color:var(--text);
+  padding:7px 12px;border-radius:7px;font-size:12px;cursor:pointer;
+}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#04121f;font-weight:600}
+.spacer{flex:1}
+
+/* ---------- Sections ---------- */
+.section{margin-bottom:34px;scroll-margin-top:84px}
+.section-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.section-head .emoji{font-size:24px;line-height:1}
+.section-head h2{font-size:19px;font-weight:700}
+.section-head .plan{font-size:11.5px;color:var(--muted2);margin-top:2px}
+.section-desc{color:var(--muted);font-size:13px;margin:8px 0 14px;max-width:900px}
+.wl-prereq{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 15px;margin-bottom:16px}
+.wl-prereq h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent2);margin-bottom:7px}
+.wl-prereq ul{margin-left:18px}
+.wl-prereq li{margin:3px 0;font-size:12.5px;color:var(--muted)}
+
+/* ---------- GS blocks ---------- */
+.gs h3{font-size:15px;margin:18px 0 8px;color:var(--text)}
+.gs p{margin:8px 0;color:var(--muted)}
+.gs ul,.gs ol{margin:8px 0 8px 22px}
+.gs li{margin:4px 0;color:var(--muted)}
+.gs strong{color:var(--text)}
+.note{border-radius:8px;padding:10px 13px;margin:10px 0;font-size:12.5px;border:1px solid}
+.note-info{background:rgba(59,157,255,.08);border-color:rgba(59,157,255,.35);color:#bcd9f5}
+.note-tip{background:rgba(63,185,80,.08);border-color:rgba(63,185,80,.35);color:#b6e6bf}
+.note-warn{background:rgba(248,81,73,.09);border-color:rgba(248,81,73,.4);color:#f3b6b3}
+table.tbl{border-collapse:collapse;width:100%;margin:10px 0;font-size:12px}
+table.tbl th,table.tbl td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+table.tbl th{background:var(--panel2);color:var(--accent2);font-weight:600}
+table.tbl td{color:var(--muted)}
+
+/* ---------- Code blocks ---------- */
+.cb{position:relative;margin:8px 0}
+.cb pre{background:#0a0d12;border:1px solid var(--line);border-radius:7px;padding:11px 13px;
+  overflow-x:auto;font-size:12px;line-height:1.5}
+.cb code{color:#cfe3f5;white-space:pre}
+.cb .copy{position:absolute;top:6px;right:6px;background:var(--panel3);border:1px solid var(--line2);
+  color:var(--muted);font-size:10.5px;padding:3px 8px;border-radius:5px;cursor:pointer}
+.cb .copy:hover{color:var(--text);border-color:var(--accent)}
+.cb .copy.ok{color:var(--pass);border-color:var(--pass)}
+code.ic{background:var(--panel3);padding:1px 5px;border-radius:4px;font-size:11.5px;color:#cfe3f5}
+
+/* ---------- Scenario cards ---------- */
+.scenario{background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-bottom:9px;overflow:hidden}
+.scenario.hidden{display:none}
+.sc-head{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer}
+.sc-head:hover{background:var(--panel2)}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;background:var(--notrun)}
+.dot.pass{background:var(--pass)}
+.dot.fail{background:var(--fail)}
+.sc-id{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted2);flex:0 0 64px}
+.sc-title{font-weight:600;font-size:13.5px;flex:1;min-width:0}
+.badges{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.badge{font-size:10px;padding:2px 8px;border-radius:11px;font-weight:600;white-space:nowrap}
+.b-sev[data-v="High"]{background:rgba(248,81,73,.16);color:var(--high)}
+.b-sev[data-v="Medium"]{background:rgba(240,160,32,.16);color:var(--medium)}
+.b-sev[data-v="Low"]{background:rgba(59,157,255,.16);color:var(--low)}
+.b-sev[data-v="Informational"]{background:rgba(139,152,168,.18);color:var(--info)}
+.b-type[data-v="Executable"]{background:rgba(63,185,80,.15);color:var(--exec)}
+.b-type[data-v="Reference"]{background:rgba(163,113,247,.16);color:var(--reference)}
+.b-type[data-v="Pipeline"]{background:rgba(45,212,191,.15);color:var(--pipeline)}
+.b-mitre{background:var(--panel3);color:var(--muted)}
+.chev{color:var(--muted2);font-size:11px;transition:transform .15s;flex:0 0 14px}
+.scenario.open .chev{transform:rotate(90deg)}
+.sc-body{display:none;padding:4px 16px 16px;border-top:1px solid var(--line)}
+.scenario.open .sc-body{display:block}
+.alert-line{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;
+  padding:9px 12px;margin:13px 0;font-size:12.5px}
+.alert-line .k{color:var(--muted2);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px}
+.alert-line .v{color:var(--accent2);font-weight:600;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.sc-body h5{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);
+  margin:15px 0 5px}
+.sc-body p.d{color:var(--muted);font-size:13px;margin:4px 0}
+.sc-body ul.pre{margin-left:19px}
+.sc-body ul.pre li{font-size:12.5px;color:var(--muted);margin:3px 0}
+ol.steps{margin-left:20px}
+ol.steps li{margin:8px 0;font-size:13px;color:var(--text)}
+ol.steps li .stext{color:var(--text)}
+.expected{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.3);border-radius:7px;
+  padding:9px 12px;font-size:12.5px;color:#bfe6c6;margin-top:6px}
+.cleanup{background:rgba(240,160,32,.06);border:1px solid rgba(240,160,32,.28);border-radius:7px;
+  padding:9px 12px;font-size:12.5px;color:#eccfa0;margin-top:8px}
+.sc-foot{display:flex;align-items:center;gap:8px;margin-top:15px;flex-wrap:wrap}
+.statusbtn{background:var(--panel2);border:1px solid var(--line2);color:var(--muted);
+  padding:6px 13px;border-radius:6px;font-size:11.5px;cursor:pointer}
+.statusbtn:hover{color:var(--text)}
+.statusbtn.sel[data-s="pass"]{background:var(--pass);border-color:var(--pass);color:#06200b}
+.statusbtn.sel[data-s="fail"]{background:var(--fail);border-color:var(--fail);color:#fff}
+.statusbtn.sel[data-s="notrun"]{background:var(--notrun);border-color:var(--notrun);color:#fff}
+.sc-notes{flex:1;min-width:220px;background:var(--panel2);border:1px solid var(--line2);
+  color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;resize:vertical}
+.sc-notes:focus{outline:none;border-color:var(--accent)}
+.empty{text-align:center;color:var(--muted2);padding:40px;font-size:13px}
+footer.foot{color:var(--muted2);font-size:11.5px;border-top:1px solid var(--line);
+  margin-top:30px;padding-top:16px}
+
+@media (max-width:860px){
+  .sidebar{display:none}
+  .content{padding:18px}
+}
+@media print{
+  .sidebar,.toolbar{display:none}
+  .content{max-width:none}
+  .scenario .sc-body{display:block!important}
+  .scenario{break-inside:avoid;border-color:#bbb}
+  body{background:#fff;color:#111}
+  .cb pre{background:#f4f4f4}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span>Defender for Cloud</span> &middot; CWPP</div>
+    <div class="brand-sub">Alert Simulation Test Plan &mdash; PoC</div>
+    <div class="nav-progress">
+      <div class="pct" id="navPct">0%</div>
+      <div class="lbl"><span id="navDone">0</span> of <span id="navTotal">200</span> scenarios run</div>
+      <div class="pbar"><i class="p" id="navP" style="width:0"></i><i class="f" id="navF" style="width:0"></i></div>
+    </div>
+    <div class="nav" id="nav"></div>
+  </aside>
+  <main class="content">
+    <header class="top">
+      <h1>Microsoft Defender for Cloud &mdash; CWPP Alert Simulation Test Plan</h1>
+      <div class="tagline">A proof-of-concept playbook to validate Cloud Workload Protection alerts &mdash; 8 workloads &times; 25 scenarios.</div>
+      <div class="meta-row">
+        <span><b>200</b> scenarios</span>
+        <span><b>8</b> workloads</span>
+        <span>Scenario types: <b>Executable</b> &middot; <b>Reference</b> &middot; <b>Pipeline</b></span>
+        <span>Progress is saved in this browser (localStorage).</span>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="Search scenarios, alert names, MITRE tactics&hellip;">
+      <div class="fgroup" id="sevFilters">
+        <span class="chip" data-sev="High">High</span>
+        <span class="chip" data-sev="Medium">Medium</span>
+        <span class="chip" data-sev="Low">Low</span>
+        <span class="chip" data-sev="Informational">Info</span>
+      </div>
+      <div class="fgroup" id="typeFilters">
+        <span class="chip" data-type="Executable">Executable</span>
+        <span class="chip" data-type="Reference">Reference</span>
+        <span class="chip" data-type="Pipeline">Pipeline</span>
+      </div>
+      <div class="fgroup" id="statusFilters">
+        <span class="chip" data-status="notrun">Not run</span>
+        <span class="chip" data-status="pass">Passed</span>
+        <span class="chip" data-status="fail">Failed</span>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="expandAll">Expand all</button>
+      <button class="btn" id="collapseAll">Collapse all</button>
+      <button class="btn" id="exportBtn">Export CSV</button>
+      <button class="btn" id="printBtn">Print / PDF</button>
+      <button class="btn" id="resetBtn">Reset</button>
+    </div>
+
+    <div id="sections"></div>
+
+    <footer class="foot">
+      Generated for an internal Microsoft Defender for Cloud Proof-of-Concept. Alert display names, severities and
+      MITRE tactics are based on Microsoft Learn documentation and may change &mdash; always confirm against the
+      <b>Security alerts</b> page in your own tenant. All simulations are designed to be benign and must only be run
+      in an isolated, authorized PoC subscription.
+    </footer>
+  </main>
+</div>
+
+<script>
+/* =================================================================
+   DATA
+   ================================================================= */
+
+/* ---- Getting Started ---- */
+const GS = [
+{id:"gs-overview",icon:"📘",title:"How to use this test plan",blocks:[
+  {t:"p",x:"This playbook helps you systematically verify that **Microsoft Defender for Cloud** generates Cloud Workload Protection (CWPP) security alerts. It covers the eight workload protection plans, with 25 test scenarios each. Work through the **Getting Started** items first, then run scenarios per workload and record a Pass/Fail result on each card."},
+  {t:"h",x:"Scenario types"},
+  {t:"ul",x:[
+   "**Executable** &mdash; a safe, repeatable action you perform yourself that triggers a real detection (e.g. the EICAR test file, a documented Microsoft test command, a benign command pattern, or anomalous-but-harmless activity).",
+   "**Reference** &mdash; a behavioral / machine-learning detection that cannot be deterministically forced. The card documents the alert, its trigger conditions and what it looks like, so you can recognize it. Use the built-in **Sample alerts** feature to validate the alerting pipeline for these.",
+   "**Pipeline** &mdash; validates the end-to-end alert delivery path (SIEM export, email, workflow automation, the Defender XDR portal) rather than a single detection."
+  ]},
+  {t:"h",x:"Safety &amp; scope rules"},
+  {t:"ul",x:[
+   "Run **only** in a dedicated, isolated PoC subscription &mdash; never against production resources or data.",
+   "Every Executable scenario uses benign artifacts: the industry-standard **EICAR** anti-malware test file (inert), Microsoft-documented test commands, or harmless activity against **your own** resources.",
+   "Obtain written authorization before testing in any shared or corporate environment.",
+   "Tear down test resources when finished to avoid cost and drift.",
+   "Allow time: most alerts surface within **10&ndash;30 minutes**; some behavioral and data-plane alerts can take **1&ndash;3 hours**."
+  ]},
+  {t:"note",v:"warn",x:"**Do not run these scenarios against production.** Brute-force loops, registry changes and anomalous access patterns are safe on disposable test resources but are disruptive and noisy on live systems."},
+  {t:"note",v:"info",x:"This file stores your Pass/Fail results and notes in the browser's localStorage. Use **Export CSV** to capture results for your PoC report. **Reset** clears all progress."}
+]},
+{id:"gs-environment",icon:"🏗️",title:"Build the PoC environment",blocks:[
+  {t:"p",x:"Stand up an isolated subscription, a resource group, and enable the Defender for Cloud workload plans you want to test."},
+  {t:"ol",x:[
+   "Identify or create a **dedicated PoC subscription** with no production workloads.",
+   "Create a resource group to hold all test assets.",
+   "Enable the relevant **Defender plans** at the subscription scope (table below).",
+   "Deploy the test resources each workload needs (VMs, AKS cluster, storage account, SQL/PostgreSQL/Cosmos DB, App Service, Key Vault, API Management).",
+   "Confirm **Continuous export** and/or **email notifications** are configured so you can verify alert delivery."
+  ]},
+  {t:"code",x:"# Create the resource group used throughout this plan\naz group create --name DfC-PoC-RG --location eastus"},
+  {t:"h",x:"Defender for Cloud plan reference"},
+  {t:"table",head:["Workload","Plan name (-n)","Notes"],rows:[
+   ["Servers","VirtualMachines","Use sub-plan P2 for full EDR / Defender for Endpoint"],
+   ["Containers","Containers","Includes the AKS Defender sensor"],
+   ["Storage","StorageAccounts","Use sub-plan DefenderForStorageV2 (malware scanning + sensitive data)"],
+   ["SQL databases","SqlServers","Azure SQL DB &amp; Synapse"],
+   ["SQL on machines","SqlServerVirtualMachines","SQL Server on VMs / Arc"],
+   ["Open-source DBs","OpenSourceRelationalDatabases","MySQL, PostgreSQL, MariaDB"],
+   ["Cosmos DB","CosmosDbs","Azure Cosmos DB"],
+   ["App Service","AppServices","Azure App Service web apps"],
+   ["Key Vault","KeyVaults","Azure Key Vault"],
+   ["Resource Manager","Arm","Control-plane / management operations"],
+   ["APIs","Api","Azure API Management; use sub-plan P1"]
+  ]},
+  {t:"code",x:"# Enable every CWPP plan used in this test plan (subscription scope)\nfor PLAN in VirtualMachines Containers StorageAccounts SqlServers \\\n            SqlServerVirtualMachines OpenSourceRelationalDatabases CosmosDbs \\\n            AppServices KeyVaults Arm Api; do\n  az security pricing create -n \"$PLAN\" --tier standard\ndone\n\n# Verify plan status\naz security pricing list -o table"},
+  {t:"note",v:"tip",x:"You do not have to enable every plan at once. Enable a workload's plan immediately before testing it &mdash; see the **enable command** shown in each workload's header."}
+]},
+{id:"gs-cli",icon:"⚙️",title:"Install &amp; configure Azure CLI",blocks:[
+  {t:"p",x:"Most Executable scenarios are driven from the Azure CLI on your test workstation. Install it, sign in, and select the PoC subscription."},
+  {t:"h",x:"1. Install the Azure CLI"},
+  {t:"code",x:"# macOS (Homebrew)\nbrew update && brew install azure-cli\n\n# Windows (winget) -- or download the MSI from https://aka.ms/installazurecliwindows\nwinget install -e --id Microsoft.AzureCLI\n\n# Linux (Debian / Ubuntu)\ncurl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"},
+  {t:"h",x:"2. Sign in and select the PoC subscription"},
+  {t:"code",x:"az login                       # add --use-device-code on headless hosts\naz account set --subscription \"<PoC-subscription-name-or-id>\"\naz account show -o table        # confirm the active subscription"},
+  {t:"h",x:"3. Useful extensions"},
+  {t:"code",x:"az extension add --name ssh          # az ssh vm\naz extension add --name aks-preview   # optional, AKS testing\naz aks install-cli                    # installs kubectl + kubelogin"},
+  {t:"h",x:"4. Manage Defender for Cloud plans &amp; alerts from the CLI"},
+  {t:"code",x:"az security pricing list -o table             # plan status\naz security pricing show -n VirtualMachines    # one plan\naz security alert list -o table                # list current alerts\naz security alert list --query \"[?properties.severity=='High']\" -o table"},
+  {t:"note",v:"info",x:"Requires **Azure CLI 2.50+**. Run {{az upgrade}} to update. Some Defender commands also require the {{az login}} identity to hold **Security Admin** or **Contributor** on the subscription."}
+]},
+{id:"gs-machines",icon:"🖥️",title:"Configure the test machines",blocks:[
+  {t:"p",x:"Several workloads need test compute. Deploy disposable Windows / Linux VMs and an AKS cluster, all in DfC-PoC-RG."},
+  {t:"h",x:"Windows Server test VM"},
+  {t:"code",x:"az vm create \\\n  --resource-group DfC-PoC-RG --name win-test-01 \\\n  --image Win2022Datacenter --size Standard_D2s_v5 \\\n  --admin-username pocadmin --admin-password '<Strong-P@ssw0rd-Here>' \\\n  --public-ip-sku Standard\n\naz vm open-port --resource-group DfC-PoC-RG --name win-test-01 --port 3389"},
+  {t:"ul",x:[
+   "Connect with **RDP** to the public IP using the {{pocadmin}} credentials.",
+   "Keep **Microsoft Defender Antivirus** real-time protection **ON** &mdash; required for malware / EICAR detections.",
+   "Defender for Cloud auto-provisions the **Defender for Endpoint** sensor; allow ~20 minutes after VM creation for onboarding.",
+   "For EICAR staging, create an AV-excluded folder (e.g. {{C:\\DfC-Test}}) only where a scenario explicitly says so, then remove the exclusion afterwards."
+  ]},
+  {t:"h",x:"Linux test VM"},
+  {t:"code",x:"az vm create \\\n  --resource-group DfC-PoC-RG --name linux-test-01 \\\n  --image Ubuntu2204 --size Standard_B2s \\\n  --admin-username pocadmin --generate-ssh-keys \\\n  --public-ip-sku Standard\n\naz vm open-port --resource-group DfC-PoC-RG --name linux-test-01 --port 22\nssh pocadmin@<public-ip>\nsudo apt-get update && sudo apt-get install -y curl wget python3"},
+  {t:"h",x:"AKS cluster (for Defender for Containers)"},
+  {t:"code",x:"az aks create \\\n  --resource-group DfC-PoC-RG --name aks-test-01 \\\n  --node-count 2 --enable-defender --generate-ssh-keys\n\naz aks get-credentials --resource-group DfC-PoC-RG --name aks-test-01\nkubectl get nodes\n# Confirm the Defender sensor is running\nkubectl get pods -n kube-system -l app=defender"},
+  {t:"note",v:"info",x:"Defender for Servers protects Azure VMs, on-prem and multicloud machines via **Azure Arc**. To test an Arc machine, run the Arc onboarding script on it and confirm it appears under Defender for Cloud inventory before running Server scenarios."}
+]},
+{id:"gs-sample",icon:"🧪",title:"Built-in Sample alerts (safest baseline)",blocks:[
+  {t:"p",x:"Defender for Cloud can generate **sample alerts** for every enabled plan against simulated resources. This touches no real resource and is the fastest way to validate that alerts reach your portal, SIEM, email and automation. Run this first for every workload."},
+  {t:"ol",x:[
+   "Sign in to the Azure portal as a user with the **Subscription Contributor** role.",
+   "Open **Microsoft Defender for Cloud &rarr; Security alerts**.",
+   "On the toolbar, select **Sample alerts**.",
+   "Choose the **subscription**.",
+   "Select the **Microsoft Defender plan(s)** you want sample alerts for.",
+   "Select **Create sample alerts** and wait a few minutes."
+  ]},
+  {t:"note",v:"info",x:"Sample alerts are created for **simulated resources** &mdash; no real resource is affected. There is no REST API or {{az}} command for this feature; it is portal-only. The Pipeline-type scenarios in this plan rely on it."},
+  {t:"note",v:"tip",x:"Sample alerts also flow to configured SIEM connectors, email recipients and workflow automations &mdash; making them ideal for the Pipeline scenarios in each workload."}
+]},
+{id:"gs-verify",icon:"🔍",title:"Where to verify alerts",blocks:[
+  {t:"p",x:"After running a scenario, check these locations. Record the exact alert name you observe in the scenario's Notes field &mdash; it may differ slightly from the expected name in this plan."},
+  {t:"ul",x:[
+   "**Azure portal** &rarr; Microsoft Defender for Cloud &rarr; **Security alerts** (filter by resource, severity, time).",
+   "**Microsoft Defender portal** (security.microsoft.com) &rarr; **Incidents &amp; alerts** &mdash; the unified XDR view.",
+   "**Email** &mdash; if email notifications are configured for the subscription.",
+   "**SIEM / Log Analytics** &mdash; via Continuous export or the Microsoft Sentinel / Defender XDR connector.",
+   "**Azure CLI** &mdash; {{az security alert list -o table}}."
+  ]},
+  {t:"code",x:"# List alerts raised in the PoC subscription, newest first\naz security alert list \\\n  --query \"sort_by([].{Name:properties.alertDisplayName, Severity:properties.severity, Resource:properties.compromisedEntity, Time:properties.timeGeneratedUtc}, &Time)\" \\\n  -o table"},
+  {t:"note",v:"warn",x:"Treat any unexpected alert in the PoC subscription as real until proven otherwise. If results contain content from external sources, validate before acting."}
+]}
+];
+
+/* ---- Workload metadata ---- */
+const WORKLOADS = [
+ {key:"servers",icon:"🖥️",name:"Defender for Servers",
+  plan:"Plan: VirtualMachines (sub-plan P2)",
+  enable:"az security pricing create -n VirtualMachines --tier standard --subplan P2",
+  desc:"Protects Windows and Linux servers (Azure, on-prem and multicloud via Arc) with EDR through the integrated Microsoft Defender for Endpoint sensor, plus agent-based and agentless threat detections.",
+  prereqs:[
+   "Defender for Servers Plan 2 enabled on the PoC subscription.",
+   "One Windows Server test VM and one Linux test VM deployed (see Getting Started).",
+   "Both VMs onboarded to Microsoft Defender for Endpoint (auto-provisioned) and showing as healthy.",
+   "Endpoint real-time / antivirus protection enabled on both VMs.",
+   "RDP access to the Windows VM and SSH access to the Linux VM.",
+   "Allow 10-30 minutes after each action for alerts to surface."
+  ]},
+ {key:"containers",icon:"🐳",name:"Defender for Containers",
+  plan:"Plan: Containers",
+  enable:"az security pricing create -n Containers --tier standard",
+  desc:"Protects Kubernetes clusters (AKS, Arc-enabled, EKS, GKE) with the Defender sensor for runtime detections and control-plane (audit log) threat detections.",
+  prereqs:[
+   "Defender for Containers plan enabled on the PoC subscription.",
+   "An AKS test cluster created with --enable-defender (see Getting Started).",
+   "kubectl configured (az aks get-credentials) and the Defender sensor pods Running in kube-system.",
+   "Helm and Python 3.7+ installed locally if you use the Microsoft container attack-simulation tool.",
+   "Cluster-admin rights on the test cluster.",
+   "Runtime alerts appear within minutes; control-plane alerts can take up to ~1 hour."
+  ]},
+ {key:"storage",icon:"📦",name:"Defender for Storage",
+  plan:"Plan: StorageAccounts (DefenderForStorageV2)",
+  enable:"az security pricing create -n StorageAccounts --tier standard --subplan DefenderForStorageV2",
+  desc:"Detects unusual and potentially malicious access to Azure Storage accounts, including on-upload malware scanning and sensitive-data threat detection.",
+  prereqs:[
+   "Defender for Storage (V2) enabled, with Malware Scanning and Sensitive data threat detection turned on.",
+   "A test storage account with a blob container (e.g. test-container) in the PoC subscription.",
+   "The Tor Browser available on a test workstation for Tor-exit-node scenarios.",
+   "An antivirus exclusion on the local folder used to stage the EICAR test file.",
+   "Malware scanning results appear within minutes; access-pattern alerts can take 1-3 hours."
+  ]},
+ {key:"databases",icon:"🗄️",name:"Defender for Databases",
+  plan:"Plans: SqlServers, OpenSourceRelationalDatabases, CosmosDbs",
+  enable:"az security pricing create -n SqlServers --tier standard   # repeat for OpenSourceRelationalDatabases, CosmosDbs",
+  desc:"Detects SQL injection, brute-force, anomalous logins and data exfiltration across Azure SQL, SQL on machines, open-source databases (MySQL/PostgreSQL/MariaDB) and Azure Cosmos DB.",
+  prereqs:[
+   "Defender plans enabled for SqlServers, OpenSourceRelationalDatabases and CosmosDbs.",
+   "A test Azure SQL Database, a test Azure Database for PostgreSQL (or MySQL), and a test Cosmos DB account.",
+   "sqlcmd / psql / mysql clients installed on a test workstation.",
+   "Server-level firewall rules allowing your test workstation IP.",
+   "Login anomaly alerts compare against a 60-day baseline -- expect delays on a brand-new server."
+  ]},
+ {key:"appservice",icon:"🌐",name:"Defender for App Service",
+  plan:"Plan: AppServices",
+  enable:"az security pricing create -n AppServices --tier standard",
+  desc:"Analyses App Service web apps and their infrastructure for web attacks, reconnaissance, fileless attacks, crypto-mining and dangling DNS.",
+  prereqs:[
+   "Defender for App Service enabled on the PoC subscription.",
+   "A test App Service web app deployed and reachable on its azurewebsites.net URL.",
+   "A second deployment slot or test site for the dangling-DNS scenario.",
+   "curl / a browser on a test workstation.",
+   "App Service alerts are largely log-based; allow ~1.5-4 hours for some detections."
+  ]},
+ {key:"keyvault",icon:"🔑",name:"Defender for Key Vault",
+  plan:"Plan: KeyVaults",
+  enable:"az security pricing create -n KeyVaults --tier standard",
+  desc:"Detects unusual and suspicious access to Azure Key Vaults. Most detections are behavioral; this plan combines deterministic scenarios, method variants and pipeline checks.",
+  prereqs:[
+   "Defender for Key Vault enabled on the PoC subscription.",
+   "A test Key Vault containing a few sample secrets, keys and certificates.",
+   "RBAC or access-policy permissions for your test identity and a second test identity / service principal.",
+   "The Tor Browser for Tor-exit-node scenarios.",
+   "Behavioral alerts need a baseline -- generate normal traffic for a day or two before anomaly scenarios."
+  ]},
+ {key:"resourcemanager",icon:"🛠️",name:"Defender for Resource Manager",
+  plan:"Plan: Arm",
+  enable:"az security pricing create -n Arm --tier standard",
+  desc:"Monitors Azure Resource Manager control-plane operations for suspicious management activity, exploitation toolkits (MicroBurst, PowerZure, Azurite) and high-risk operation patterns.",
+  prereqs:[
+   "Defender for Resource Manager (Arm plan) enabled on the PoC subscription.",
+   "An Owner or Contributor / User Access Administrator identity for role and management-operation scenarios.",
+   "The Tor Browser for control-plane-from-suspicious-IP scenarios.",
+   "Toolkit-detection alerts (MicroBurst / PowerZure) are Reference scenarios -- validate via Sample alerts.",
+   "Control-plane alerts typically surface within 15-30 minutes."
+  ]},
+ {key:"apis",icon:"🔌",name:"Defender for APIs",
+  plan:"Plan: Api (sub-plan P1)",
+  enable:"az security pricing create -n Api --tier standard --subplan P1",
+  desc:"Protects APIs published through Azure API Management, detecting anomalous traffic, enumeration, suspicious clients and data-exposure patterns.",
+  prereqs:[
+   "Defender for APIs (Api plan, P1) enabled on the PoC subscription.",
+   "An Azure API Management instance with at least one API onboarded to Defender for APIs.",
+   "A test API with a few operations and parameters; a published product / subscription key.",
+   "curl or a load-generation tool on a test workstation; the Tor Browser for Tor scenarios.",
+   "Defender for APIs builds a 30-day traffic baseline -- anomaly alerts are most reliable after warm-up."
+  ]}
+];
+
+/* =================================================================
+   SCENARIOS  (25 per workload)
+   Field model: id,title,type,sev,mitre,alert,desc,prereq[],steps[[text,code]],expected,cleanup,note
+   ================================================================= */
+
+const SRV_SCENARIOS = [
+ {id:"SRV-01",title:"EICAR anti-malware test file on a Windows VM",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Antimalware Action Taken",
+  desc:"Confirms Microsoft Defender Antivirus on a Windows server detects a known-inert test file and that the detection is surfaced as a Defender for Cloud alert.",
+  prereq:["Windows test VM with Defender Antivirus real-time protection ON.","Internet access from the VM."],
+  steps:[
+   ["RDP into the Windows test VM as a local administrator.",""],
+   ["Open a browser on the VM and download the official EICAR test file from the EICAR website.","https://www.eicar.org/download-anti-malware-testfile/"],
+   ["Defender Antivirus should quarantine the file the moment it is written. If the browser blocks the download, use the password-protected ZIP variant and extract it.",""],
+   ["Open **Windows Security &rarr; Protection history** and confirm the local detection.",""]
+  ],
+  expected:"An 'Antimalware Action Taken' alert appears in Defender for Cloud > Security alerts for the VM within ~10-20 minutes.",
+  cleanup:"Let Defender Antivirus remove the quarantined file."},
+ {id:"SRV-02",title:"Defender for Endpoint EDR detection test (Windows)",type:"Executable",sev:"High",mitre:"Execution",
+  alert:"EDR detection test alert (surfaced from Microsoft Defender for Endpoint)",
+  desc:"Runs Microsoft's documented EDR detection test command, which exercises the behavioral pipeline and raises a test alert from Defender for Endpoint that flows into Defender for Cloud.",
+  prereq:["Windows test VM onboarded to Microsoft Defender for Endpoint.","Elevated command prompt."],
+  steps:[
+   ["RDP into the Windows VM and open an **elevated** Command Prompt (Run as administrator).",""],
+   ["Run the Microsoft-documented EDR test command. The download intentionally targets localhost and fails harmlessly; the behavior pattern is what triggers the detection.","powershell.exe -NoExit -ExecutionPolicy Bypass -WindowStyle Hidden $ErrorActionPreference= 'silentlycontinue';(New-Object System.Net.WebClient).DownloadFile('http://127.0.0.1/1.exe','C:\\test-MDATP-test\\invoice.exe');Start-Process 'C:\\test-MDATP-test\\invoice.exe'"],
+   ["Wait ~10 minutes and check Defender for Cloud > Security alerts.",""]
+  ],
+  expected:"A test/EDR alert originating from Microsoft Defender for Endpoint appears for the VM. Record the exact name shown in your portal.",
+  cleanup:"Delete the C:\\test-MDATP-test folder if created."},
+ {id:"SRV-03",title:"EICAR anti-malware test file on a Linux VM",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Antimalware Action Taken",
+  desc:"Confirms the Defender for Endpoint sensor on a Linux server detects the inert EICAR test file and raises a Defender for Cloud alert.",
+  prereq:["Linux test VM onboarded to Defender for Endpoint with real-time protection enabled.","curl installed."],
+  steps:[
+   ["SSH into the Linux test VM.",""],
+   ["Download the EICAR test file from the official EICAR source.","curl -o /tmp/eicar.com.txt https://secure.eicar.org/eicar.com.txt"],
+   ["The sensor should detect and quarantine the file. Confirm with the Defender for Endpoint client.","mdatp threat list"]
+  ],
+  expected:"An 'Antimalware Action Taken' alert appears for the Linux VM within ~10-20 minutes.",
+  cleanup:"Remove /tmp/eicar.com.txt if it was not quarantined."},
+ {id:"SRV-04",title:"Decode an executable with certutil (Windows)",type:"Executable",sev:"High",mitre:"Defense Evasion",
+  alert:"Detected decoding of an executable using built-in certutil.exe tool",
+  desc:"Uses the living-off-the-land certutil.exe technique to decode a Base64-encoded benign executable -- a common defense-evasion pattern.",
+  prereq:["Windows test VM, elevated command prompt."],
+  steps:[
+   ["RDP into the Windows VM and open an elevated Command Prompt.",""],
+   ["Base64-encode a benign system executable.","certutil -encode C:\\Windows\\System32\\calc.exe C:\\DfC-Test\\enc.txt"],
+   ["Decode it back to an executable using certutil -- this is the detected behavior.","certutil -decode C:\\DfC-Test\\enc.txt C:\\DfC-Test\\decoded.exe"]
+  ],
+  expected:"A 'Detected decoding of an executable using built-in certutil.exe tool' alert is raised for the VM.",
+  cleanup:"Delete C:\\DfC-Test\\enc.txt and decoded.exe."},
+ {id:"SRV-05",title:"Download a file using certutil (Windows)",type:"Executable",sev:"Medium",mitre:"Defense Evasion",
+  alert:"Suspicious download using Certutil detected",
+  desc:"Abuses certutil.exe as a file-download utility -- a recognized living-off-the-land download technique.",
+  prereq:["Windows test VM with internet access, elevated command prompt."],
+  steps:[
+   ["Open an elevated Command Prompt on the Windows VM.",""],
+   ["Use certutil to download a harmless file from a public URL.","certutil -urlcache -split -f https://www.microsoft.com/robots.txt C:\\DfC-Test\\dl.txt"]
+  ],
+  expected:"A 'Suspicious download using Certutil detected' alert is raised for the VM.",
+  cleanup:"Delete C:\\DfC-Test\\dl.txt."},
+ {id:"SRV-06",title:"Encoded PowerShell command execution (Windows)",type:"Executable",sev:"High",mitre:"Execution",
+  alert:"Suspicious PowerShell Activity Detected",
+  desc:"Executes a Base64-encoded PowerShell command. Encoded command lines are a common obfuscation technique that Defender for Endpoint flags.",
+  prereq:["Windows test VM, command prompt."],
+  steps:[
+   ["On the Windows VM, build a Base64 (UTF-16LE) encoded command for a benign action.","powershell -Command \"[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('Get-Process'))\""],
+   ["Run PowerShell with the -EncodedCommand parameter using the string produced above.","powershell.exe -NoProfile -EncodedCommand <paste-base64-string>"]
+  ],
+  expected:"A 'Suspicious PowerShell Activity Detected' or encoded-command-line alert is raised for the VM.",
+  cleanup:"None required."},
+ {id:"SRV-07",title:"Suspicious PowerShell cmdlet pattern (Windows)",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Suspicious PowerShell cmdlets executed",
+  desc:"Runs a sequence of PowerShell cmdlets in a pattern associated with download-and-execute tradecraft (using a benign payload).",
+  prereq:["Windows test VM, PowerShell."],
+  steps:[
+   ["Open PowerShell on the Windows VM.",""],
+   ["Run a download-cradle-style pattern pointing at a harmless file.","powershell -nop -w hidden -c \"IEX (New-Object Net.WebClient).DownloadString('https://www.microsoft.com/robots.txt')\""]
+  ],
+  expected:"A 'Suspicious PowerShell cmdlets executed' alert is raised for the VM.",
+  cleanup:"None required."},
+ {id:"SRV-08",title:"Enable the WDigest UseLogonCredential registry key (Windows)",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Detected enabling of the WDigest UseLogonCredential registry key",
+  desc:"Sets the WDigest UseLogonCredential value, a known credential-theft preparation step that forces plaintext credentials into memory.",
+  prereq:["Windows test VM, elevated command prompt."],
+  steps:[
+   ["Open an elevated Command Prompt on the Windows VM.",""],
+   ["Set the UseLogonCredential value to 1.","reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest\" /v UseLogonCredential /t REG_DWORD /d 1 /f"]
+  ],
+  expected:"A 'Detected enabling of the WDigest UseLogonCredential registry key' alert is raised for the VM.",
+  cleanup:"Revert the key: reg add ... /v UseLogonCredential /t REG_DWORD /d 0 /f"},
+ {id:"SRV-09",title:"Enumerate the local Administrators group (Windows)",type:"Executable",sev:"Informational",mitre:"Discovery",
+  alert:"Local Administrators group members were enumerated",
+  desc:"Lists members of the local Administrators group -- a common discovery action performed by attackers after gaining a foothold.",
+  prereq:["Windows test VM, command prompt."],
+  steps:[
+   ["Open a Command Prompt on the Windows VM.",""],
+   ["Enumerate the local Administrators group.","net localgroup administrators"]
+  ],
+  expected:"A 'Local Administrators group members were enumerated' alert is raised for the VM.",
+  cleanup:"None required."},
+ {id:"SRV-10",title:"Local reconnaissance command burst (Windows)",type:"Executable",sev:"Low",mitre:"Discovery",
+  alert:"Detected possible local reconnaissance activity",
+  desc:"Runs a burst of host-discovery commands in quick succession, mimicking post-exploitation reconnaissance.",
+  prereq:["Windows test VM, command prompt."],
+  steps:[
+   ["Open a Command Prompt on the Windows VM.",""],
+   ["Run a recon command burst.","whoami /all & systeminfo & ipconfig /all & net user & net group \"domain admins\" & tasklist & netstat -ano"]
+  ],
+  expected:"A 'Detected possible local reconnaissance activity' alert is raised for the VM.",
+  cleanup:"None required."},
+ {id:"SRV-11",title:"Failed SSH brute-force against a Linux VM",type:"Executable",sev:"Medium",mitre:"Probing",
+  alert:"Failed SSH brute force attack",
+  desc:"Generates many failed SSH authentication attempts against your own Linux test VM to trigger the brute-force detection.",
+  prereq:["Linux test VM with a public IP and SSH (port 22) reachable.","sshpass on the source host."],
+  steps:[
+   ["From a second host (or your workstation), run a loop of SSH attempts with deliberately wrong credentials against your test VM.","for i in $(seq 1 60); do sshpass -p 'wrong-pass-'$i ssh -o StrictHostKeyChecking=no -o ConnectTimeout=3 baduser@<linux-vm-ip> exit; done"]
+  ],
+  expected:"A 'Failed SSH brute force attack' alert is raised for the Linux VM.",
+  cleanup:"None required -- all attempts fail by design."},
+ {id:"SRV-12",title:"Successful SSH brute-force against a Linux VM",type:"Executable",sev:"High",mitre:"Exploitation",
+  alert:"Successful SSH brute force attack",
+  desc:"Follows a burst of failed logins with one successful login, matching the successful-brute-force pattern.",
+  prereq:["Linux test VM; a known valid local account with password auth temporarily enabled."],
+  steps:[
+   ["Temporarily enable SSH password authentication on the test VM and set a known password on a test account.",""],
+   ["Run many failed attempts followed by one success with the valid credentials.","for i in $(seq 1 40); do sshpass -p 'wrong'$i ssh -o StrictHostKeyChecking=no baduser@<ip> exit; done; sshpass -p '<valid-pass>' ssh -o StrictHostKeyChecking=no <validuser>@<ip> 'id'"]
+  ],
+  expected:"A 'Successful SSH brute force attack' alert is raised for the Linux VM.",
+  cleanup:"Disable password authentication again; remove the temporary account."},
+ {id:"SRV-13",title:"RDP brute-force against a Windows VM",type:"Executable",sev:"High",mitre:"Exploitation",
+  alert:"Suspicious authentication activity",
+  desc:"Generates repeated failed RDP / network logons against your own Windows test VM to trigger authentication-anomaly detection.",
+  prereq:["Windows test VM with RDP (3389) reachable."],
+  steps:[
+   ["From a second host, attempt many RDP / SMB logons with invalid credentials. Example using a PowerShell logon loop with bad credentials.","1..50 | % { cmdkey /add:<win-vm-ip> /user:baduser /pass:wrong$_ ; net use \\\\<win-vm-ip>\\IPC$ /user:baduser wrong$_ }"],
+   ["Optionally follow with one valid logon to also exercise the successful-brute-force path.",""]
+  ],
+  expected:"A 'Suspicious authentication activity' (and possibly 'Successful brute force attack') alert is raised for the VM.",
+  cleanup:"Clear stored credentials: cmdkey /delete:<win-vm-ip>."},
+ {id:"SRV-14",title:"Clear the bash history file (Linux)",type:"Executable",sev:"Medium",mitre:"Defense Evasion",
+  alert:"A history file has been cleared",
+  desc:"Empties the shell history -- an anti-forensics action attackers use to cover their tracks.",
+  prereq:["Linux test VM, SSH access."],
+  steps:[
+   ["SSH into the Linux VM.",""],
+   ["Clear the bash history file and the in-memory history.","cat /dev/null > ~/.bash_history && history -c"]
+  ],
+  expected:"A 'A history file has been cleared' alert is raised for the Linux VM.",
+  cleanup:"None required."},
+ {id:"SRV-15",title:"Add a new SSH key to authorized_keys (Linux)",type:"Executable",sev:"Low",mitre:"Persistence",
+  alert:"New SSH key added",
+  desc:"Appends a new public key to authorized_keys -- a common persistence mechanism on Linux hosts.",
+  prereq:["Linux test VM, SSH access."],
+  steps:[
+   ["SSH into the Linux VM and generate a throwaway key pair.","ssh-keygen -t ed25519 -f /tmp/poc_key -N ''"],
+   ["Append the new public key to authorized_keys.","cat /tmp/poc_key.pub >> ~/.ssh/authorized_keys"]
+  ],
+  expected:"A 'New SSH key added' alert is raised for the Linux VM.",
+  cleanup:"Remove the added line from ~/.ssh/authorized_keys and delete /tmp/poc_key*."},
+ {id:"SRV-16",title:"Access the shadow password file (Linux)",type:"Executable",sev:"Informational",mitre:"Credential Access",
+  alert:"Suspicious password access",
+  desc:"Reads /etc/shadow, the hashed-password store -- an action associated with credential harvesting.",
+  prereq:["Linux test VM, SSH access with sudo."],
+  steps:[
+   ["SSH into the Linux VM.",""],
+   ["Read the shadow file.","sudo cat /etc/shadow"]
+  ],
+  expected:"A 'Suspicious password access' alert is raised for the Linux VM.",
+  cleanup:"None required."},
+ {id:"SRV-17",title:"Crypto-mining process behavior (Linux)",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"Process associated with digital currency mining detected",
+  desc:"Defender for Servers detects digital-currency mining from process characteristics, command lines and connections to known mining pools. Running a real miner is out of scope for a benign PoC.",
+  prereq:["Defender for Servers Plan 2."],
+  steps:[
+   ["Do not run an actual cryptominer. To validate this detection deterministically, use the **Sample alerts** feature for the VirtualMachines plan (see Getting Started).",""],
+   ["Recognize the alert: it fires on miner process names/arguments and outbound connections to mining pools.",""]
+  ],
+  expected:"A 'Process associated with digital currency mining detected' alert appears (via Sample alerts, or organically if mining occurs).",
+  cleanup:"None."},
+ {id:"SRV-18",title:"Digital currency mining behavior (Windows)",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"Digital currency mining related behavior detected",
+  desc:"Behavioral detection of crypto-mining activity on Windows servers. Not safely forced without running mining software.",
+  prereq:["Defender for Servers Plan 2."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the VirtualMachines plan.",""],
+   ["Recognize the alert: it correlates process behavior, CPU patterns and known mining indicators.",""]
+  ],
+  expected:"A 'Digital currency mining related behavior detected' alert appears via Sample alerts.",
+  cleanup:"None."},
+ {id:"SRV-19",title:"Fileless attack technique detection",type:"Reference",sev:"High",mitre:"Defense Evasion",
+  alert:"Fileless attack technique detected",
+  desc:"Detects in-memory / fileless techniques such as shellcode injection and process hollowing. These cannot be safely forced without real attack tooling.",
+  prereq:["Defender for Servers Plan 2."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the VirtualMachines plan.",""],
+   ["Recognize the alert: it identifies memory-resident code injection and suspicious process memory regions.",""]
+  ],
+  expected:"A 'Fileless attack technique detected' alert appears via Sample alerts.",
+  cleanup:"None."},
+ {id:"SRV-20",title:"Fileless attack toolkit detection",type:"Reference",sev:"Medium",mitre:"Defense Evasion",
+  alert:"Fileless attack toolkit detected",
+  desc:"Detects toolkits that operate entirely in memory. Documented here for recognition; validate the pipeline with Sample alerts.",
+  prereq:["Defender for Servers Plan 2."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the VirtualMachines plan.",""],
+   ["Recognize the alert: it flags memory artifacts characteristic of known fileless toolkits.",""]
+  ],
+  expected:"A 'Fileless attack toolkit detected' alert appears via Sample alerts.",
+  cleanup:"None."},
+ {id:"SRV-21",title:"LSASS memory dump with ProcDump (Windows)",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Possible credential dumping detected",
+  desc:"Uses the legitimate Sysinternals ProcDump tool to dump LSASS process memory -- the canonical credential-dumping technique.",
+  prereq:["Windows test VM, elevated command prompt, internet access to download Sysinternals ProcDump."],
+  steps:[
+   ["Download ProcDump from Sysinternals on the Windows VM.","curl -L -o C:\\DfC-Test\\Procdump.zip https://download.sysinternals.com/files/Procdump.zip"],
+   ["Extract it, then dump LSASS memory from an elevated prompt.","procdump.exe -accepteula -ma lsass.exe C:\\DfC-Test\\lsass.dmp"]
+  ],
+  expected:"A 'Possible credential dumping detected' alert is raised for the VM.",
+  cleanup:"Delete C:\\DfC-Test\\lsass.dmp and the ProcDump files."},
+ {id:"SRV-22",title:"Kerberos Golden Ticket parameters",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Suspected Kerberos Golden Ticket attack parameters observed",
+  desc:"Detects Kerberos ticket parameters consistent with a Golden Ticket forgery. Requires Active Directory and offensive tooling; documented here for recognition.",
+  prereq:["Defender for Servers Plan 2."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the VirtualMachines plan.",""],
+   ["Recognize the alert: it observes anomalous Kerberos ticket lifetimes / encryption parameters.",""]
+  ],
+  expected:"A 'Suspected Kerberos Golden Ticket attack parameters observed' alert appears via Sample alerts.",
+  cleanup:"None."},
+ {id:"SRV-23",title:"Malicious web shell on a Linux web server",type:"Reference",sev:"Medium",mitre:"Persistence",
+  alert:"Possible malicious web shell detected",
+  desc:"Detects web shells dropped into a web server's content directory. Avoid placing real web-shell code; validate the pipeline with Sample alerts.",
+  prereq:["Defender for Servers Plan 2; optionally a web server on the Linux VM."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the VirtualMachines plan.",""],
+   ["Recognize the alert: it correlates web-server child processes spawning shells with suspicious files in web roots.",""]
+  ],
+  expected:"A 'Possible malicious web shell detected' alert appears via Sample alerts.",
+  cleanup:"None."},
+ {id:"SRV-24",title:"Python encoded downloader (Linux)",type:"Executable",sev:"Low",mitre:"Execution",
+  alert:"Python encoded downloader detected",
+  desc:"Runs a Python one-liner that decodes a Base64 string and fetches a remote file -- a downloader pattern (using a harmless target).",
+  prereq:["Linux test VM with python3 installed."],
+  steps:[
+   ["SSH into the Linux VM.",""],
+   ["Run a Base64-decoded Python downloader against a harmless URL.","python3 -c \"import base64,urllib.request; u=base64.b64decode('aHR0cHM6Ly93d3cubWljcm9zb2Z0LmNvbS9yb2JvdHMudHh0').decode(); urllib.request.urlretrieve(u,'/tmp/poc.txt')\""]
+  ],
+  expected:"A 'Python encoded downloader detected' alert is raised for the Linux VM.",
+  cleanup:"Delete /tmp/poc.txt."},
+ {id:"SRV-25",title:"Install a suspicious Windows service",type:"Executable",sev:"Medium",mitre:"Persistence",
+  alert:"Suspect service installation",
+  desc:"Creates a new Windows service pointing at a command interpreter -- a persistence technique flagged by Defender for Endpoint.",
+  prereq:["Windows test VM, elevated command prompt."],
+  steps:[
+   ["Open an elevated Command Prompt on the Windows VM.",""],
+   ["Create a service whose binary path is cmd.exe.","sc create DfCPocSvc binPath= \"cmd.exe /c echo poc\" start= demand"]
+  ],
+  expected:"A 'Suspect service installation' alert is raised for the VM.",
+  cleanup:"Delete the service: sc delete DfCPocSvc."}
+];
+
+const CON_SCENARIOS = [
+ {id:"CON-01",title:"Run the Microsoft container attack-simulation tool",type:"Executable",sev:"High",mitre:"Execution",
+  alert:"Microsoft Defender for Cloud test alert (not a threat).",
+  desc:"Microsoft publishes an open-source Kubernetes attack-simulation tool that safely exercises multiple container detections, including a dedicated benign test alert.",
+  prereq:["AKS test cluster with the Defender sensor running.","kubectl configured for the cluster; Helm and Python 3.7+ installed locally."],
+  steps:[
+   ["Download the simulation script from Microsoft's GitHub repository.","curl -O https://raw.githubusercontent.com/microsoft/Defender-for-Cloud-Attack-Simulation/refs/heads/main/simulation.py"],
+   ["Run the tool against your test cluster and choose a scenario (Reconnaissance, Lateral Movement, Secrets Gathering, Crypto Mining, Web Shell).","python simulation.py"],
+   ["Review Defender for Cloud > Security alerts. The tool deploys only benign test resources.",""]
+  ],
+  expected:"A 'Microsoft Defender for Cloud test alert (not a threat).' is raised, plus alerts for the chosen scenario.",
+  cleanup:"The tool removes its resources; verify with kubectl get pods -A and delete any leftovers."},
+ {id:"CON-02",title:"Deploy a privileged container",type:"Executable",sev:"Informational",mitre:"Privilege Escalation",
+  alert:"Privileged container detected",
+  desc:"Deploys a pod whose container runs with securityContext.privileged=true -- effectively granting host-level access.",
+  prereq:["kubectl configured for the AKS test cluster."],
+  steps:[
+   ["Apply a privileged pod manifest.","kubectl apply -f - <<'EOF'\napiVersion: v1\nkind: Pod\nmetadata:\n  name: poc-privileged\nspec:\n  containers:\n  - name: c\n    image: alpine\n    command: [\"sleep\",\"3600\"]\n    securityContext:\n      privileged: true\nEOF"]
+  ],
+  expected:"A 'Privileged container detected' alert is raised for the cluster.",
+  cleanup:"kubectl delete pod poc-privileged"},
+ {id:"CON-03",title:"Run a high-privilege command inside a container",type:"Executable",sev:"Informational",mitre:"Privilege Escalation",
+  alert:"Command within a container running with high privileges",
+  desc:"Executes a command inside the privileged pod -- the runtime sensor flags command execution within a high-privilege container.",
+  prereq:["The poc-privileged pod from CON-02 running."],
+  steps:[
+   ["Exec a command inside the privileged container.","kubectl exec poc-privileged -- id"]
+  ],
+  expected:"A 'Command within a container running with high privileges' alert is raised.",
+  cleanup:"kubectl delete pod poc-privileged"},
+ {id:"CON-04",title:"Deploy a container with a sensitive host volume mount",type:"Executable",sev:"Informational",mitre:"Privilege Escalation",
+  alert:"Container with a sensitive volume mount detected",
+  desc:"Deploys a pod that mounts a sensitive host path (the node filesystem) into the container.",
+  prereq:["kubectl configured for the AKS test cluster."],
+  steps:[
+   ["Apply a pod that mounts the host root filesystem.","kubectl apply -f - <<'EOF'\napiVersion: v1\nkind: Pod\nmetadata:\n  name: poc-hostmount\nspec:\n  containers:\n  - name: c\n    image: alpine\n    command: [\"sleep\",\"3600\"]\n    volumeMounts:\n    - name: host\n      mountPath: /host\n  volumes:\n  - name: host\n    hostPath:\n      path: /\nEOF"]
+  ],
+  expected:"A 'Container with a sensitive volume mount detected' alert is raised.",
+  cleanup:"kubectl delete pod poc-hostmount"},
+ {id:"CON-05",title:"Create a new container in the kube-system namespace",type:"Executable",sev:"Informational",mitre:"Persistence",
+  alert:"New container in the kube-system namespace detected",
+  desc:"Deploys a workload into the protected kube-system namespace -- a persistence / hiding technique.",
+  prereq:["kubectl configured; permission to create pods in kube-system."],
+  steps:[
+   ["Run a pod in kube-system.","kubectl run poc-kubesys --image=alpine -n kube-system --restart=Never -- sleep 3600"]
+  ],
+  expected:"A 'New container in the kube-system namespace detected' alert is raised.",
+  cleanup:"kubectl delete pod poc-kubesys -n kube-system"},
+ {id:"CON-06",title:"Bind an identity to the cluster-admin role",type:"Executable",sev:"Informational",mitre:"Persistence",
+  alert:"Role binding to the cluster-admin role detected",
+  desc:"Creates a ClusterRoleBinding granting cluster-admin -- the highest-privilege Kubernetes role.",
+  prereq:["kubectl configured with rights to create ClusterRoleBindings."],
+  steps:[
+   ["Create a cluster-admin binding for a test subject.","kubectl create clusterrolebinding poc-admin-bind --clusterrole=cluster-admin --user=poc-test-user"]
+  ],
+  expected:"A 'Role binding to the cluster-admin role detected' alert is raised.",
+  cleanup:"kubectl delete clusterrolebinding poc-admin-bind"},
+ {id:"CON-07",title:"Create a new high-privileges ClusterRole",type:"Executable",sev:"Informational",mitre:"Persistence",
+  alert:"New high privileges role detected",
+  desc:"Creates a ClusterRole with wildcard permissions over all resources and verbs.",
+  prereq:["kubectl configured with rights to create ClusterRoles."],
+  steps:[
+   ["Create a wildcard ClusterRole.","kubectl create clusterrole poc-superrole --verb='*' --resource='*'"]
+  ],
+  expected:"A 'New high privileges role detected' alert is raised.",
+  cleanup:"kubectl delete clusterrole poc-superrole"},
+ {id:"CON-08",title:"Expose the Kubernetes dashboard publicly",type:"Executable",sev:"High",mitre:"Initial Access",
+  alert:"Exposed Kubernetes dashboard detected",
+  desc:"Deploys the Kubernetes web dashboard and exposes it via a public LoadBalancer -- a high-risk misconfiguration.",
+  prereq:["kubectl configured for the AKS test cluster."],
+  steps:[
+   ["Deploy the Kubernetes dashboard.","kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml"],
+   ["Patch the dashboard service to type LoadBalancer to give it a public IP.","kubectl patch svc kubernetes-dashboard -n kubernetes-dashboard -p '{\"spec\":{\"type\":\"LoadBalancer\"}}'"]
+  ],
+  expected:"An 'Exposed Kubernetes dashboard detected' alert is raised.",
+  cleanup:"kubectl delete namespace kubernetes-dashboard"},
+ {id:"CON-09",title:"Expose a Kubernetes service to the internet",type:"Executable",sev:"Medium",mitre:"Initial Access",
+  alert:"Exposed Kubernetes service detected",
+  desc:"Creates a Service of type LoadBalancer, exposing a workload directly to the public internet.",
+  prereq:["kubectl configured for the AKS test cluster."],
+  steps:[
+   ["Deploy a test workload.","kubectl create deployment poc-web --image=nginx"],
+   ["Expose it publicly with a LoadBalancer service.","kubectl expose deployment poc-web --type=LoadBalancer --port=80"]
+  ],
+  expected:"An 'Exposed Kubernetes service detected' alert is raised.",
+  cleanup:"kubectl delete service poc-web && kubectl delete deployment poc-web"},
+ {id:"CON-10",title:"Digital currency mining container",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"Digital currency mining container detected",
+  desc:"Detects containers based on known cryptominer images. Pulling a real miner image is out of scope -- use the simulation tool's crypto-mining scenario.",
+  prereq:["Defender for Containers plan; the simulation tool from CON-01."],
+  steps:[
+   ["Run the CON-01 simulation tool and select the **Crypto Mining** scenario, or use **Sample alerts** for the Containers plan.",""],
+   ["Recognize the alert: it matches container images and processes associated with cryptomining.",""]
+  ],
+  expected:"A 'Digital currency mining container detected' alert is raised.",
+  cleanup:"None."},
+ {id:"CON-11",title:"Cryptomining process inside a container",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"Process associated with digital currency mining detected",
+  desc:"Runtime detection of mining processes by command line and pool connections. Validate safely with the simulation tool.",
+  prereq:["The simulation tool from CON-01."],
+  steps:[
+   ["Run the CON-01 simulation tool and select the **Crypto Mining** scenario.",""],
+   ["Recognize the alert: it flags mining process arguments and connections to mining pools.",""]
+  ],
+  expected:"A 'Process associated with digital currency mining detected' alert is raised.",
+  cleanup:"None."},
+ {id:"CON-12",title:"Kubernetes penetration-testing tool detected",type:"Executable",sev:"Low",mitre:"Execution",
+  alert:"Kubernetes penetration testing tool detected",
+  desc:"Detects known Kubernetes assessment tools running against the cluster. The simulation tool's Reconnaissance scenario exercises this safely.",
+  prereq:["The simulation tool from CON-01."],
+  steps:[
+   ["Run the CON-01 simulation tool and select the **Reconnaissance** scenario, which runs recognized Kubernetes assessment tooling.",""]
+  ],
+  expected:"A 'Kubernetes penetration testing tool detected' alert is raised.",
+  cleanup:"The simulation tool removes its resources."},
+ {id:"CON-13",title:"Web shell deployed in a container",type:"Executable",sev:"Medium",mitre:"Persistence",
+  alert:"Possible malicious web shell detected.",
+  desc:"Detects web shells inside containers. Use the simulation tool's Web Shell scenario rather than deploying real web-shell code.",
+  prereq:["The simulation tool from CON-01."],
+  steps:[
+   ["Run the CON-01 simulation tool and select the **Web Shell** scenario.",""]
+  ],
+  expected:"A 'Possible malicious web shell detected.' alert is raised.",
+  cleanup:"The simulation tool removes its resources."},
+ {id:"CON-14",title:"Suspicious download-then-run inside a container",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Suspicious Download Then Run Activity",
+  desc:"Executes the download-then-run pattern inside a running container using a harmless script.",
+  prereq:["A running test pod (e.g. poc-web from CON-09)."],
+  steps:[
+   ["Exec into a running container, download a benign script and execute it immediately.","kubectl exec deploy/poc-web -- sh -c \"cd /tmp && (command -v curl >/dev/null && curl -sO https://www.microsoft.com/robots.txt || wget -q https://www.microsoft.com/robots.txt) && sh ./robots.txt 2>/dev/null; true\""]
+  ],
+  expected:"A 'Suspicious Download Then Run Activity' alert is raised.",
+  cleanup:"None required."},
+ {id:"CON-15",title:"File download from a known malicious source",type:"Reference",sev:"Medium",mitre:"Command And Control",
+  alert:"Detected file download from a known malicious source",
+  desc:"Threat-intelligence-driven detection of downloads from known-bad hosts. Cannot be safely forced; validate via Sample alerts.",
+  prereq:["Defender for Containers plan."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Containers plan.",""],
+   ["Recognize the alert: it matches outbound download URLs against threat intelligence.",""]
+  ],
+  expected:"A 'Detected file download from a known malicious source' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"CON-16",title:"Access the cloud metadata service from a container",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Access to cloud metadata service detected",
+  desc:"Queries the Azure Instance Metadata Service (IMDS) from inside a pod -- a common technique to steal cloud identity tokens.",
+  prereq:["A running test pod (e.g. poc-web from CON-09)."],
+  steps:[
+   ["Exec into a container and query the IMDS endpoint.","kubectl exec deploy/poc-web -- sh -c \"command -v curl >/dev/null && curl -s -H Metadata:true 'http://169.254.169.254/metadata/instance?api-version=2021-02-01' || wget -q -O- --header='Metadata:true' 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'\""]
+  ],
+  expected:"An 'Access to cloud metadata service detected' alert is raised.",
+  cleanup:"None required."},
+ {id:"CON-17",title:"Access the kubelet kubeconfig file",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Access to kubelet kubeconfig file detected",
+  desc:"Reads the kubelet's kubeconfig from the node filesystem -- a credential-theft technique. Requires a container with the host mounted.",
+  prereq:["The poc-hostmount pod from CON-04 running (host root mounted at /host)."],
+  steps:[
+   ["Exec into the host-mounted container and read the kubelet kubeconfig.","kubectl exec poc-hostmount -- sh -c \"cat /host/var/lib/kubelet/kubeconfig 2>/dev/null || cat /host/etc/kubernetes/kubelet.conf\""]
+  ],
+  expected:"An 'Access to kubelet kubeconfig file detected' alert is raised.",
+  cleanup:"kubectl delete pod poc-hostmount"},
+ {id:"CON-18",title:"Run an SSH server inside a container",type:"Executable",sev:"Informational",mitre:"Execution",
+  alert:"SSH server is running inside a container",
+  desc:"Starts an SSH daemon inside a running container -- containers should not normally run SSH servers.",
+  prereq:["A running test pod based on alpine (run one if needed)."],
+  steps:[
+   ["Run an alpine pod and start an SSH daemon inside it.","kubectl run poc-ssh --image=alpine --restart=Never -- sleep 3600\nkubectl exec poc-ssh -- sh -c \"apk add --no-cache openssh && ssh-keygen -A && /usr/sbin/sshd\""]
+  ],
+  expected:"An 'SSH server is running inside a container' alert is raised.",
+  cleanup:"kubectl delete pod poc-ssh"},
+ {id:"CON-19",title:"Reverse shell from a container",type:"Executable",sev:"Medium",mitre:"Exploitation",
+  alert:"Potential reverse shell detected",
+  desc:"Detects a container establishing an interactive outbound shell. Use the simulation tool's Lateral Movement / Web Shell scenario.",
+  prereq:["The simulation tool from CON-01."],
+  steps:[
+   ["Run the CON-01 simulation tool and select the **Lateral Movement** (or Web Shell) scenario, which exercises reverse-shell behavior safely.",""]
+  ],
+  expected:"A 'Potential reverse shell detected' alert is raised.",
+  cleanup:"The simulation tool removes its resources."},
+ {id:"CON-20",title:"Delete Kubernetes events (anti-forensics)",type:"Executable",sev:"Low",mitre:"Defense Evasion",
+  alert:"Kubernetes events deleted",
+  desc:"Bulk-deletes Kubernetes events -- an anti-forensics action to remove traces of activity.",
+  prereq:["kubectl configured for the AKS test cluster."],
+  steps:[
+   ["Delete all events in the default namespace.","kubectl delete events --all -n default"]
+  ],
+  expected:"A 'Kubernetes events deleted' alert is raised.",
+  cleanup:"None required."},
+ {id:"CON-21",title:"Suspicious request to the Kubernetes API",type:"Executable",sev:"Medium",mitre:"Lateral Movement",
+  alert:"Suspicious request to Kubernetes API",
+  desc:"Issues anomalous API-server requests using a pod's service-account token, mimicking in-cluster enumeration.",
+  prereq:["A running test pod (e.g. poc-web from CON-09)."],
+  steps:[
+   ["From inside a pod, use the mounted service-account token to enumerate cluster resources directly against the API server.","kubectl exec deploy/poc-web -- sh -c 'T=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token); curl -sk -H \"Authorization: Bearer $T\" https://kubernetes.default.svc/api/v1/secrets'"]
+  ],
+  expected:"A 'Suspicious request to Kubernetes API' alert is raised.",
+  cleanup:"None required."},
+ {id:"CON-22",title:"Suspicious request to the Kubernetes Dashboard",type:"Reference",sev:"Medium",mitre:"Lateral Movement",
+  alert:"Suspicious request to the Kubernetes Dashboard",
+  desc:"Detects suspicious access patterns to the Kubernetes dashboard service. Best validated via Sample alerts or after deploying the dashboard in CON-08.",
+  prereq:["Defender for Containers plan."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Containers plan.",""],
+   ["Recognize the alert: it flags anomalous requests originating against the dashboard service identity.",""]
+  ],
+  expected:"A 'Suspicious request to the Kubernetes Dashboard' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"CON-23",title:"MITRE Caldera agent detected",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"MITRE Caldera agent detected",
+  desc:"Detects the MITRE Caldera adversary-emulation agent running in a container. Documented for recognition; validate via Sample alerts.",
+  prereq:["Defender for Containers plan."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Containers plan.",""],
+   ["Recognize the alert: it identifies process/network behavior characteristic of the Caldera agent.",""]
+  ],
+  expected:"A 'MITRE Caldera agent detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"CON-24",title:"Abnormal Kubernetes service-account operation",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Abnormal Kubernetes service account operation detected",
+  desc:"Behavioral detection of service accounts performing operations outside their normal pattern. Validate via Sample alerts.",
+  prereq:["Defender for Containers plan."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Containers plan.",""],
+   ["Recognize the alert: it baselines service-account behavior and flags deviations.",""]
+  ],
+  expected:"An 'Abnormal Kubernetes service account operation detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"CON-25",title:"Modify the CoreDNS configuration",type:"Executable",sev:"Low",mitre:"Lateral Movement",
+  alert:"CoreDNS modification in Kubernetes detected",
+  desc:"Edits the CoreDNS ConfigMap -- tampering with cluster DNS can enable traffic redirection and lateral movement.",
+  prereq:["kubectl configured with rights to edit ConfigMaps in kube-system."],
+  steps:[
+   ["Add a harmless annotation to the CoreDNS ConfigMap to trigger the modification detection.","kubectl annotate configmap coredns -n kube-system poc-test=dfc-cwpp --overwrite"]
+  ],
+  expected:"A 'CoreDNS modification in Kubernetes detected' alert is raised.",
+  cleanup:"kubectl annotate configmap coredns -n kube-system poc-test- "}
+]; /*=CON=*/
+const STO_SCENARIOS = [
+ {id:"STO-01",title:"Upload the EICAR test file (malware scanning)",type:"Executable",sev:"High",mitre:"Lateral Movement",
+  alert:"Malicious file uploaded to storage account",
+  desc:"Uploads the inert EICAR anti-malware test file to a blob container so Defender for Storage on-upload malware scanning detects it.",
+  prereq:["Defender for Storage V2 with Malware Scanning enabled.","A test storage account and the test-container blob container.","An antivirus exclusion on the local staging folder."],
+  steps:[
+   ["Download the EICAR test file from the official source into an AV-excluded folder.","curl -o eicar.com.txt https://secure.eicar.org/eicar.com.txt"],
+   ["Upload it to the test container.","az storage blob upload --account-name <storage-acct> --container-name test-container --name eicar.com.txt --file eicar.com.txt --auth-mode login"],
+   ["After a minute, check the blob index tags for the scan result.","az storage blob tag list --account-name <storage-acct> --container-name test-container --name eicar.com.txt --auth-mode login"]
+  ],
+  expected:"The blob index tag 'Malware Scanning scan result' shows Malicious, and a 'Malicious file uploaded to storage account' alert is raised.",
+  cleanup:"az storage blob delete --account-name <storage-acct> --container-name test-container --name eicar.com.txt --auth-mode login"},
+ {id:"STO-02",title:"Download the malicious blob",type:"Executable",sev:"Low",mitre:"Lateral Movement",
+  alert:"Malicious blob was downloaded from a storage account",
+  desc:"Downloads the EICAR blob uploaded in STO-01, exercising the download-side malware detection.",
+  prereq:["The eicar.com.txt blob from STO-01 still present."],
+  steps:[
+   ["Download the known-malicious blob.","az storage blob download --account-name <storage-acct> --container-name test-container --name eicar.com.txt --file ./dl-eicar.txt --auth-mode login"]
+  ],
+  expected:"A 'Malicious blob was downloaded from a storage account' alert is raised (Low severity for the EICAR test file).",
+  cleanup:"Delete ./dl-eicar.txt locally."},
+ {id:"STO-03",title:"Potential malware uploaded (hash reputation)",type:"Reference",sev:"High",mitre:"Lateral Movement",
+  alert:"Potential malware uploaded to a storage account",
+  desc:"Hash-reputation analysis flags uploaded blobs whose hash matches known malware. Validate via Sample alerts; the EICAR upload in STO-01 may also trigger this.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it matches blob hashes against threat intelligence (independent of malware scanning).",""]
+  ],
+  expected:"A 'Potential malware uploaded to a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-04",title:"Discover publicly accessible containers (successful)",type:"Executable",sev:"Medium",mitre:"Collection",
+  alert:"Publicly accessible storage containers successfully discovered",
+  desc:"Enumerates a public blob container anonymously over REST, mimicking an attacker scanning for exposed data.",
+  prereq:["A test container set to public (blob/container) access level."],
+  steps:[
+   ["Temporarily set a test container to public access.","az storage container set-permission --account-name <storage-acct> --name public-test --public-access container --auth-mode login"],
+   ["From an external host, anonymously list the container contents over REST.","curl \"https://<storage-acct>.blob.core.windows.net/public-test?restype=container&comp=list\""]
+  ],
+  expected:"A 'Publicly accessible storage containers successfully discovered' alert is raised.",
+  cleanup:"Set the container back to private: az storage container set-permission ... --public-access off"},
+ {id:"STO-05",title:"Scan for public containers (unsuccessful)",type:"Executable",sev:"Low",mitre:"Collection",
+  alert:"Publicly accessible storage containers unsuccessfully scanned",
+  desc:"Attempts anonymous enumeration against private containers, mimicking a failed reconnaissance scan.",
+  prereq:["A private test container."],
+  steps:[
+   ["From an external host, attempt to anonymously list several non-public container names.","for c in backup data secrets private; do curl -s -o /dev/null -w \"%{http_code} $c\\n\" \"https://<storage-acct>.blob.core.windows.net/$c?restype=container&comp=list\"; done"]
+  ],
+  expected:"A 'Publicly accessible storage containers unsuccessfully scanned' alert is raised.",
+  cleanup:"None required."},
+ {id:"STO-06",title:"Change a sensitive container to public access",type:"Executable",sev:"High",mitre:"Collection",
+  alert:"The access level of a sensitive storage blob container was changed to allow unauthenticated public access",
+  desc:"Uploads a file with test sensitive data, then changes the container access level to public -- a high-impact exposure.",
+  prereq:["Defender for Storage V2 with Sensitive data threat detection enabled."],
+  steps:[
+   ["Create a file containing test sensitive data and upload it (use a fictitious test SSN such as 'ASD 100-22-3333 SSN Text').","az storage blob upload --account-name <storage-acct> --container-name sensitive-test --name record.txt --file record.txt --auth-mode login"],
+   ["Wait for sensitivity classification, then change the container access level to public.","az storage container set-permission --account-name <storage-acct> --name sensitive-test --public-access container --auth-mode login"]
+  ],
+  expected:"A 'The access level of a sensitive storage blob container was changed to allow unauthenticated public access' alert is raised within 30-60 minutes.",
+  cleanup:"Set the container back to private and delete record.txt."},
+ {id:"STO-07",title:"Change a potentially sensitive container to public",type:"Executable",sev:"Medium",mitre:"Collection",
+  alert:"The access level of a potentially sensitive storage blob container was changed to allow unauthenticated public access",
+  desc:"Changes a container holding non-classified but potentially sensitive data to public access.",
+  prereq:["A test container with some blobs but no confirmed sensitive-data classification."],
+  steps:[
+   ["Change a regular test container's access level to public.","az storage container set-permission --account-name <storage-acct> --name test-container --public-access blob --auth-mode login"]
+  ],
+  expected:"A 'The access level of a potentially sensitive storage blob container was changed...' alert is raised.",
+  cleanup:"Set the container back to private: --public-access off"},
+ {id:"STO-08",title:"Authenticated access from a Tor exit node",type:"Executable",sev:"High",mitre:"Initial Access",
+  alert:"Authenticated access from a Tor exit node",
+  desc:"Performs an authenticated storage operation while routed through the Tor network.",
+  prereq:["The Tor Browser installed on a test workstation.","A storage account access key or signed-in session usable through Tor."],
+  steps:[
+   ["Open the Tor Browser to obtain a Tor circuit.",""],
+   ["Through a Tor-routed session, access the storage account (e.g. open an authenticated blob URL or run Azure Storage Explorer configured to use the Tor SOCKS proxy 127.0.0.1:9150).",""]
+  ],
+  expected:"An 'Authenticated access from a Tor exit node' alert is raised.",
+  cleanup:"None required."},
+ {id:"STO-09",title:"Access a blob container via SAS through Tor",type:"Executable",sev:"High",mitre:"Pre-Attack",
+  alert:"Access from a Tor exit node to a storage blob container",
+  desc:"Generates a blob SAS URL and downloads it through the Tor Browser, simulating anonymized access to data.",
+  prereq:["The Tor Browser; a test blob in test-container-tor."],
+  steps:[
+   ["Generate a read-only SAS URL for a test blob.","az storage blob generate-sas --account-name <storage-acct> --container-name test-container-tor --name file.txt --permissions r --expiry 2026-12-31 --full-uri --auth-mode login --as-user"],
+   ["Open the resulting SAS URL in the Tor Browser to download the blob.",""]
+  ],
+  expected:"An 'Access from a Tor exit node to a storage blob container' alert is raised within 1-3 hours.",
+  cleanup:"None required (the SAS expires)."},
+ {id:"STO-10",title:"Unusual unauthenticated access to a container",type:"Executable",sev:"Low",mitre:"Initial Access",
+  alert:"Unusual unauthenticated access to a storage container",
+  desc:"Performs anonymous reads against a public container in a pattern unlike its normal access profile.",
+  prereq:["The public-test container from STO-04 still public."],
+  steps:[
+   ["Anonymously read several blobs from the public container in quick succession.","for i in 1 2 3 4 5; do curl -s -o /dev/null \"https://<storage-acct>.blob.core.windows.net/public-test/file$i.txt\"; done"]
+  ],
+  expected:"An 'Unusual unauthenticated access to a storage container' alert is raised.",
+  cleanup:"Set public-test back to private."},
+ {id:"STO-11",title:"External access with an overly permissive SAS token",type:"Executable",sev:"Medium",mitre:"Exfiltration",
+  alert:"Suspicious external access to an Azure storage account with overly permissive SAS token",
+  desc:"Creates a broad account-level SAS token and uses it from an external public IP to read data.",
+  prereq:["Storage account key access."],
+  steps:[
+   ["Generate an over-permissioned account SAS (all services, resource types and permissions).","az storage account generate-sas --account-name <storage-acct> --services bfqt --resource-types sco --permissions rwdlacup --expiry 2026-12-31 --https-only -o tsv"],
+   ["From an external host, use the SAS to list and read blobs.","curl \"https://<storage-acct>.blob.core.windows.net/test-container?restype=container&comp=list&<sas-token>\""]
+  ],
+  expected:"A 'Suspicious external access to an Azure storage account with overly permissive SAS token' alert is raised.",
+  cleanup:"None (the SAS expires); revoke by rotating the account key if needed."},
+ {id:"STO-12",title:"External write operation with an overly permissive SAS",type:"Executable",sev:"Medium",mitre:"Impact",
+  alert:"Suspicious external operation to an Azure storage account with overly permissive SAS token",
+  desc:"Uses the broad SAS token from STO-11 to perform a write/management operation from an external IP.",
+  prereq:["The overly permissive SAS from STO-11."],
+  steps:[
+   ["From an external host, use the SAS to upload (write) a blob.","az storage blob upload --account-name <storage-acct> --container-name test-container --name sas-write.txt --file sas-write.txt --sas-token \"<sas-token>\""]
+  ],
+  expected:"A 'Suspicious external operation to an Azure storage account with overly permissive SAS token' alert is raised.",
+  cleanup:"Delete the sas-write.txt blob."},
+ {id:"STO-13",title:"Unusual SAS token use from a public IP",type:"Executable",sev:"Low",mitre:"Exfiltration",
+  alert:"Unusual SAS token was used to access an Azure storage account from a public IP address",
+  desc:"Uses a SAS token from a public IP address that is unusual for the account.",
+  prereq:["A SAS token for a test blob; access from an external/public IP."],
+  steps:[
+   ["Generate a SAS for a blob and access it from a public IP not previously seen for the account (e.g. a different network or cloud VM).","curl \"https://<storage-acct>.blob.core.windows.net/test-container/file.txt?<sas-token>\""]
+  ],
+  expected:"An 'Unusual SAS token was used to access an Azure storage account from a public IP address' alert is raised.",
+  cleanup:"None required."},
+ {id:"STO-14",title:"Access from a suspicious IP address",type:"Reference",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Access from a suspicious IP address",
+  desc:"Detects storage access from IP addresses flagged by Microsoft threat intelligence. Cannot be safely forced; validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it correlates the caller IP with threat-intelligence feeds.",""]
+  ],
+  expected:"An 'Access from a suspicious IP address' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-15",title:"Access from a suspicious application",type:"Reference",sev:"High",mitre:"Initial Access",
+  alert:"Access from a suspicious application",
+  desc:"Detects storage access by client applications associated with malicious activity. Validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it inspects the calling application's user-agent and behavior.",""]
+  ],
+  expected:"An 'Access from a suspicious application' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-16",title:"Phishing content hosted on a storage account",type:"Reference",sev:"High",mitre:"Collection",
+  alert:"Phishing content hosted on a storage account",
+  desc:"Detects when a storage account hosts content used in an active phishing campaign (fed by Microsoft 365 Defender). Validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: phishing URLs reported elsewhere are matched back to the hosting storage account.",""]
+  ],
+  expected:"A 'Phishing content hosted on a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-17",title:"Unusual amount of data extracted",type:"Reference",sev:"Low",mitre:"Exfiltration",
+  alert:"Unusual amount of data extracted from a storage account",
+  desc:"Behavioral detection of data egress far above the account's normal baseline. Validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it baselines egress volume and flags large deviations.",""]
+  ],
+  expected:"An 'Unusual amount of data extracted from a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-18",title:"Unusual data exploration",type:"Reference",sev:"Low",mitre:"Execution",
+  alert:"Unusual data exploration in a storage account",
+  desc:"Detects enumeration/browsing patterns inconsistent with the account's normal usage. Validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it flags broad listing/exploration activity that deviates from baseline.",""]
+  ],
+  expected:"An 'Unusual data exploration in a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-19",title:"Unusual deletion in a storage account",type:"Executable",sev:"Medium",mitre:"Exfiltration",
+  alert:"Unusual deletion in a storage account",
+  desc:"Performs a bulk deletion of blobs in a pattern unlike the account's normal activity.",
+  prereq:["A test container populated with multiple disposable blobs."],
+  steps:[
+   ["Bulk-delete all blobs in the test container.","az storage blob delete-batch --account-name <storage-acct> --source bulk-delete-test --auth-mode login"]
+  ],
+  expected:"An 'Unusual deletion in a storage account' alert is raised.",
+  cleanup:"None required."},
+ {id:"STO-20",title:"Unusual access inspection",type:"Reference",sev:"Medium",mitre:"Discovery",
+  alert:"Unusual access inspection in a storage account",
+  desc:"Detects unusual probing of access permissions/policies on the account. Validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it flags inspection of ACLs/permissions inconsistent with baseline.",""]
+  ],
+  expected:"An 'Unusual access inspection in a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-21",title:"Unusual application accessed the storage account",type:"Reference",sev:"Informational",mitre:"Execution",
+  alert:"Unusual application accessed a storage account",
+  desc:"Detects a client application that has not previously accessed the account. Validate via Sample alerts.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it baselines accessing applications and flags new ones.",""]
+  ],
+  expected:"An 'Unusual application accessed a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-22",title:"Access from an unusual location",type:"Reference",sev:"Informational",mitre:"Initial Access",
+  alert:"Access from an unusual location to a storage account",
+  desc:"Detects access from a geography unusual for the account. Validate via Sample alerts; accessing from a remote-region VM may also trigger it.",
+  prereq:["Defender for Storage enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it baselines the geographic origin of access.",""]
+  ],
+  expected:"An 'Access from an unusual location to a storage account' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-23",title:"Unusual extraction from a sensitive blob container",type:"Reference",sev:"Medium",mitre:"Exfiltration",
+  alert:"Unusual amount of data extracted from a sensitive blob container",
+  desc:"Detects abnormal egress specifically from containers classified as holding sensitive data. Validate via Sample alerts.",
+  prereq:["Defender for Storage V2 with Sensitive data threat detection enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it correlates the sensitive-data classification with anomalous egress.",""]
+  ],
+  expected:"An 'Unusual amount of data extracted from a sensitive blob container' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-24",title:"Sensitive container accessed from a suspicious IP",type:"Reference",sev:"High",mitre:"Pre-Attack",
+  alert:"Access from a known suspicious IP address to a sensitive blob container",
+  desc:"Detects threat-intelligence-flagged IPs accessing sensitive-classified containers. Validate via Sample alerts.",
+  prereq:["Defender for Storage V2 with Sensitive data threat detection enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the StorageAccounts plan.",""],
+   ["Recognize the alert: it combines the suspicious-IP signal with the sensitive-container signal.",""]
+  ],
+  expected:"An 'Access from a known suspicious IP address to a sensitive blob container' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"STO-25",title:"Validate Storage alert delivery pipeline",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Sample alerts for the StorageAccounts plan",
+  desc:"Confirms Storage alerts reach all downstream destinations: the portal, email, SIEM/Log Analytics and workflow automation.",
+  prereq:["Email notifications, Continuous export and (optionally) a workflow automation configured on the subscription."],
+  steps:[
+   ["Generate sample alerts for the StorageAccounts plan (Security alerts > Sample alerts).",""],
+   ["Confirm the alert appears in Defender for Cloud > Security alerts and in the Microsoft Defender portal.",""],
+   ["Confirm the alert reaches configured email recipients and your Log Analytics workspace / SIEM.","az security alert list --query \"[?contains(properties.alertDisplayName,'storage')]\" -o table"]
+  ],
+  expected:"Storage sample alerts are visible in the portal, email, SIEM and trigger any configured automation.",
+  cleanup:"None."}
+]; /*=STO=*/
+const DB_SCENARIOS = [
+ {id:"DB-01",title:"SQL injection vulnerability probe (Azure SQL)",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"A possible vulnerability to SQL Injection",
+  desc:"Sends SQL statements that generate injection-style errors, indicating an application is vulnerable to SQL injection.",
+  prereq:["A test Azure SQL Database with the SqlServers plan enabled.","sqlcmd installed; firewall allowing your workstation."],
+  steps:[
+   ["Connect to the database with sqlcmd.",""],
+   ["Run a faulty, injection-style query that produces a SQL error several times.","sqlcmd -S <server>.database.windows.net -d <db> -U <user> -P '<pass>' -Q \"SELECT * FROM sys.objects WHERE name = '' OR 1=1 -- '\""]
+  ],
+  expected:"A 'A possible vulnerability to SQL Injection' alert is raised for the database.",
+  cleanup:"None required."},
+ {id:"DB-02",title:"Active SQL injection attempt (Azure SQL)",type:"Executable",sev:"High",mitre:"Pre-Attack",
+  alert:"Potential SQL injection",
+  desc:"Executes statements matching active SQL injection exploitation against a previously flagged vulnerability.",
+  prereq:["A test Azure SQL Database; DB-01 run first."],
+  steps:[
+   ["Run an injection-style payload that attempts to extract schema data via a UNION-based pattern.","sqlcmd -S <server>.database.windows.net -d <db> -U <user> -P '<pass>' -Q \"SELECT name FROM sys.tables WHERE 1=1 UNION SELECT name FROM sys.databases -- \""]
+  ],
+  expected:"A 'Potential SQL injection' alert is raised for the database.",
+  cleanup:"None required."},
+ {id:"DB-03",title:"SQL brute-force attack (Azure SQL)",type:"Executable",sev:"High",mitre:"Pre-Attack",
+  alert:"Suspected brute force attack",
+  desc:"Generates many failed SQL logins against your test database.",
+  prereq:["A test Azure SQL Database; sqlcmd."],
+  steps:[
+   ["Run a loop of failed logins with a non-existent account.","for i in $(seq 1 40); do sqlcmd -S <server>.database.windows.net -d <db> -U baduser -P \"Wrong$i!\" -Q \"SELECT 1\" -l 5; done"]
+  ],
+  expected:"A 'Suspected brute force attack' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-04",title:"SQL brute-force with a valid username (Azure SQL)",type:"Executable",sev:"High",mitre:"Pre-Attack",
+  alert:"Suspected brute force attack using a valid user",
+  desc:"Repeatedly attempts logins with a real username but wrong passwords.",
+  prereq:["A test Azure SQL Database with a known valid login name."],
+  steps:[
+   ["Run failed logins that use a valid username and wrong passwords.","for i in $(seq 1 40); do sqlcmd -S <server>.database.windows.net -d <db> -U <valid-user> -P \"Wrong$i!\" -Q \"SELECT 1\" -l 5; done"]
+  ],
+  expected:"A 'Suspected brute force attack using a valid user' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-05",title:"Successful SQL brute-force (Azure SQL)",type:"Executable",sev:"High",mitre:"Pre-Attack",
+  alert:"Suspected successful brute force attack",
+  desc:"Follows a burst of failed logins with one successful login using valid credentials.",
+  prereq:["A test Azure SQL Database with a known valid login and password."],
+  steps:[
+   ["Run failed logins followed by a successful one.","for i in $(seq 1 30); do sqlcmd -S <server>.database.windows.net -d <db> -U <valid-user> -P \"Wrong$i!\" -Q \"SELECT 1\" -l 5; done; sqlcmd -S <server>.database.windows.net -d <db> -U <valid-user> -P '<valid-pass>' -Q \"SELECT 1\""]
+  ],
+  expected:"A 'Suspected successful brute force attack' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-06",title:"Logon from a potentially harmful application (Azure SQL)",type:"Reference",sev:"High",mitre:"Pre-Attack",
+  alert:"Logon activity from a potentially harmful application",
+  desc:"Detects connections from client applications associated with attacks (e.g. known SQL attack tools). Validate via Sample alerts.",
+  prereq:["SqlServers plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the SqlServers plan.",""],
+   ["Recognize the alert: it inspects the connecting application name/agent for known offensive tooling.",""]
+  ],
+  expected:"A 'Logon activity from a potentially harmful application' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-07",title:"SQL login from a suspicious IP",type:"Reference",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Login from a suspicious IP",
+  desc:"Detects SQL logins from IPs flagged by threat intelligence. Validate via Sample alerts.",
+  prereq:["SqlServers plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the SqlServers plan.",""],
+   ["Recognize the alert: it matches the client IP against threat-intelligence feeds.",""]
+  ],
+  expected:"A 'Login from a suspicious IP' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-08",title:"SQL login from an unusual location",type:"Reference",sev:"Medium",mitre:"Exploitation",
+  alert:"Log on from an unusual location",
+  desc:"Detects logins from a geography unusual for the server. Connecting from a remote-region VM may also trigger it.",
+  prereq:["SqlServers plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature, or connect via sqlcmd from a VM in a distant Azure region.",""],
+   ["Recognize the alert: it baselines login geography over time.",""]
+  ],
+  expected:"A 'Log on from an unusual location' alert is raised.",
+  cleanup:"None."},
+ {id:"DB-09",title:"SQL login from a new principal",type:"Executable",sev:"Medium",mitre:"Exploitation",
+  alert:"Login from a principal user not seen in 60 days",
+  desc:"Creates a new database login and authenticates with it -- a principal not seen in the 60-day baseline.",
+  prereq:["A test Azure SQL Database; admin rights to create logins."],
+  steps:[
+   ["Create a new contained database user.","sqlcmd -S <server>.database.windows.net -d <db> -U <admin> -P '<pass>' -Q \"CREATE USER pocnewuser WITH PASSWORD = 'Str0ng-P0c-Pass!'\""],
+   ["Log in with the brand-new principal.","sqlcmd -S <server>.database.windows.net -d <db> -U pocnewuser -P 'Str0ng-P0c-Pass!' -Q \"SELECT SUSER_NAME()\""]
+  ],
+  expected:"A 'Login from a principal user not seen in 60 days' alert is raised.",
+  cleanup:"DROP USER pocnewuser"},
+ {id:"DB-10",title:"SQL login from a new domain",type:"Reference",sev:"Medium",mitre:"Exploitation",
+  alert:"Login from a domain not seen in 60 days",
+  desc:"Detects logins originating from a network domain not seen in the 60-day baseline. Validate via Sample alerts.",
+  prereq:["SqlServers plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the SqlServers plan.",""],
+   ["Recognize the alert: it baselines the source domain of connections.",""]
+  ],
+  expected:"A 'Login from a domain not seen in 60 days' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-11",title:"SQL Server spawned a command shell",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"SQL Server potentially spawned a Windows command shell and accessed an abnormal external source",
+  desc:"Detects SQL Server spawning OS shells (e.g. via xp_cmdshell) and reaching external resources. Validate via Sample alerts.",
+  prereq:["SqlServers / SqlServerVirtualMachines plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the SQL plan.",""],
+   ["Recognize the alert: it correlates SQL Server child processes with abnormal outbound access.",""]
+  ],
+  expected:"The 'SQL Server potentially spawned a Windows command shell...' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-12",title:"Unusual obfuscated SQL payload",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"Unusual payload with obfuscated parts has been initiated by SQL Server",
+  desc:"Detects obfuscated SQL payloads characteristic of evasion. Validate via Sample alerts.",
+  prereq:["SqlServers plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the SqlServers plan.",""],
+   ["Recognize the alert: it flags heavily obfuscated/encoded statement segments.",""]
+  ],
+  expected:"The 'Unusual payload with obfuscated parts...' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-13",title:"SQL login from an unusual Azure data center",type:"Reference",sev:"Low",mitre:"Probing",
+  alert:"Log on from an unusual Azure Data Center",
+  desc:"Detects logins originating from an Azure data center unusual for the server. Validate via Sample alerts.",
+  prereq:["SqlServers plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the SqlServers plan.",""],
+   ["Recognize the alert: it baselines the originating Azure data center.",""]
+  ],
+  expected:"A 'Log on from an unusual Azure Data Center' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-14",title:"Brute-force attack (PostgreSQL/MySQL)",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Suspected brute force attack",
+  desc:"Generates many failed logins against an Azure Database for PostgreSQL or MySQL test server.",
+  prereq:["A test Azure Database for PostgreSQL with the OpenSourceRelationalDatabases plan enabled.","psql client."],
+  steps:[
+   ["Run a loop of failed PostgreSQL logins.","for i in $(seq 1 40); do PGPASSWORD=\"Wrong$i\" psql \"host=<server>.postgres.database.azure.com user=baduser dbname=postgres sslmode=require\" -c \"SELECT 1\"; done"]
+  ],
+  expected:"A 'Suspected brute force attack' alert is raised for the database.",
+  cleanup:"None required."},
+ {id:"DB-15",title:"Successful brute-force (PostgreSQL/MySQL)",type:"Executable",sev:"High",mitre:"Pre-Attack",
+  alert:"Suspected successful brute force attack",
+  desc:"Follows failed logins with one successful login using valid credentials.",
+  prereq:["A test PostgreSQL/MySQL server with a known valid account."],
+  steps:[
+   ["Run failed logins then one success.","for i in $(seq 1 30); do PGPASSWORD=\"Wrong$i\" psql \"host=<server>.postgres.database.azure.com user=pocadmin dbname=postgres sslmode=require\" -c \"SELECT 1\"; done; PGPASSWORD='<valid-pass>' psql \"host=<server>.postgres.database.azure.com user=pocadmin dbname=postgres sslmode=require\" -c \"SELECT 1\""]
+  ],
+  expected:"A 'Suspected successful brute force attack' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-16",title:"Brute-force with a valid user (PostgreSQL/MySQL)",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Suspected brute force attack using a valid user",
+  desc:"Repeated failed logins with a real username and wrong passwords.",
+  prereq:["A test PostgreSQL/MySQL server with a known valid username."],
+  steps:[
+   ["Run failed logins using a valid username.","for i in $(seq 1 40); do PGPASSWORD=\"Wrong$i\" psql \"host=<server>.postgres.database.azure.com user=pocadmin dbname=postgres sslmode=require\" -c \"SELECT 1\"; done"]
+  ],
+  expected:"A 'Suspected brute force attack using a valid user' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-17",title:"Harmful application logon (PostgreSQL/MySQL)",type:"Reference",sev:"High",mitre:"Pre-Attack",
+  alert:"Attempted logon by a potentially harmful application",
+  desc:"Detects connection attempts from client applications associated with attacks. Validate via Sample alerts.",
+  prereq:["OpenSourceRelationalDatabases plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the OpenSourceRelationalDatabases plan.",""],
+   ["Recognize the alert: it inspects the connecting application identity.",""]
+  ],
+  expected:"An 'Attempted logon by a potentially harmful application' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-18",title:"OSS DB login from a suspicious IP",type:"Reference",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Login from a suspicious IP",
+  desc:"Detects open-source DB logins from threat-intelligence-flagged IPs. Validate via Sample alerts.",
+  prereq:["OpenSourceRelationalDatabases plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the OpenSourceRelationalDatabases plan.",""],
+   ["Recognize the alert: it matches the client IP against threat intelligence.",""]
+  ],
+  expected:"A 'Login from a suspicious IP' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-19",title:"OSS DB login from an unusual location",type:"Reference",sev:"Medium",mitre:"Exploitation",
+  alert:"Log on from an unusual location",
+  desc:"Detects open-source DB logins from an unusual geography. Validate via Sample alerts or connect from a remote-region VM.",
+  prereq:["OpenSourceRelationalDatabases plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature, or connect from a VM in a distant Azure region.",""],
+   ["Recognize the alert: it baselines login geography.",""]
+  ],
+  expected:"A 'Log on from an unusual location' alert is raised.",
+  cleanup:"None."},
+ {id:"DB-20",title:"OSS DB login from an unusual cloud provider",type:"Executable",sev:"Medium",mitre:"Exploitation",
+  alert:"Logon from an unusual cloud provider",
+  desc:"Connects to the database from a different cloud provider's network -- an unusual origin.",
+  prereq:["A test PostgreSQL/MySQL server; access to a VM on another cloud (or describe-only)."],
+  steps:[
+   ["From a VM hosted on a non-Azure cloud provider, connect to the database with valid credentials.","PGPASSWORD='<valid-pass>' psql \"host=<server>.postgres.database.azure.com user=pocadmin dbname=postgres sslmode=require\" -c \"SELECT 1\""]
+  ],
+  expected:"A 'Logon from an unusual cloud provider' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-21",title:"Cosmos DB access from a Tor exit node",type:"Executable",sev:"High",mitre:"Initial Access",
+  alert:"Access from a Tor exit node",
+  desc:"Accesses an Azure Cosmos DB account through the Tor network.",
+  prereq:["A test Cosmos DB account with the CosmosDbs plan enabled.","The Tor Browser."],
+  steps:[
+   ["Open the Tor Browser to obtain a Tor circuit.",""],
+   ["Through a Tor-routed session, access the Cosmos DB account (open the Data Explorer or call the REST endpoint with an account key via the Tor SOCKS proxy 127.0.0.1:9150).",""]
+  ],
+  expected:"An 'Access from a Tor exit node' alert is raised for the Cosmos DB account.",
+  cleanup:"None required."},
+ {id:"DB-22",title:"Cosmos DB access from a suspicious IP",type:"Reference",sev:"Medium",mitre:"Initial Access",
+  alert:"Access from a suspicious IP",
+  desc:"Detects Cosmos DB access from threat-intelligence-flagged IPs. Validate via Sample alerts.",
+  prereq:["CosmosDbs plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the CosmosDbs plan.",""],
+   ["Recognize the alert: it matches the caller IP against threat intelligence.",""]
+  ],
+  expected:"An 'Access from a suspicious IP' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"DB-23",title:"Cosmos DB key extraction via script",type:"Executable",sev:"Medium",mitre:"Collection",
+  alert:"Extraction of Azure Cosmos DB accounts keys via a potentially malicious script",
+  desc:"Runs a script that programmatically lists Cosmos DB account keys -- a pattern used to harvest data-plane credentials.",
+  prereq:["A test Cosmos DB account; CosmosDbs plan enabled."],
+  steps:[
+   ["Run a scripted loop that enumerates Cosmos DB accounts and lists their keys.","for ACC in $(az cosmosdb list --query \"[].name\" -o tsv); do az cosmosdb keys list --name \"$ACC\" --resource-group DfC-PoC-RG --type keys; done"]
+  ],
+  expected:"An 'Extraction of Azure Cosmos DB accounts keys via a potentially malicious script' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-24",title:"Suspicious Cosmos DB key extraction",type:"Executable",sev:"High",mitre:"Credential Access",
+  alert:"Suspicious extraction of Azure Cosmos DB account keys",
+  desc:"Lists and/or regenerates Cosmos DB account keys in a manner consistent with credential theft.",
+  prereq:["A test Cosmos DB account; CosmosDbs plan enabled."],
+  steps:[
+   ["List the read-write and read-only keys for the account.","az cosmosdb keys list --name <cosmos-acct> --resource-group DfC-PoC-RG --type keys --type read-only-keys"]
+  ],
+  expected:"A 'Suspicious extraction of Azure Cosmos DB account keys' alert is raised.",
+  cleanup:"None required."},
+ {id:"DB-25",title:"Cosmos DB SQL injection fuzzing",type:"Executable",sev:"Low",mitre:"Pre-Attack",
+  alert:"SQL injection: fuzzing attempt",
+  desc:"Sends malformed Cosmos DB SQL queries containing injection-style fuzzing payloads.",
+  prereq:["A test Cosmos DB account with a container and the SQL (core) API."],
+  steps:[
+   ["From the Data Explorer or SDK, run a series of malformed queries containing injection-style fragments against a test container.","SELECT * FROM c WHERE c.id = '' OR 1=1 -- "]
+  ],
+  expected:"A 'SQL injection: fuzzing attempt' alert is raised (an 'SQL injection: potential data exfiltration' alert may follow for successful payloads).",
+  cleanup:"None required."}
+]; /*=DB=*/
+const APP_SCENARIOS = [
+ {id:"APP-01",title:"Trigger the App Service test alert URL",type:"Executable",sev:"Low",mitre:"Pre-Attack",
+  alert:"Suspicious access to possibly vulnerable web page detected",
+  desc:"Browses a deliberately suspicious path on the web app -- Microsoft's documented way to generate an App Service alert.",
+  prereq:["A test App Service web app reachable on its azurewebsites.net URL."],
+  steps:[
+   ["From a browser or curl, request the documented test path on your web app.","curl \"https://<your-app>.azurewebsites.net/This_Will_Generate_ASC_Alert\""]
+  ],
+  expected:"A 'Suspicious access to possibly vulnerable web page detected' alert is raised within ~1.5-4 hours.",
+  cleanup:"None required."},
+ {id:"APP-02",title:"Port/service scan against the web app",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"NMap scanning detected",
+  desc:"Runs an Nmap service scan against the web app, mimicking attacker reconnaissance.",
+  prereq:["A test App Service web app; nmap installed on a test workstation."],
+  steps:[
+   ["Run an Nmap service/version scan against the app hostname.","nmap -sV -Pn <your-app>.azurewebsites.net"]
+  ],
+  expected:"An 'NMap scanning detected' alert is raised for the web app.",
+  cleanup:"None required."},
+ {id:"APP-03",title:"Web fingerprinting of the web app",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Web fingerprinting detected",
+  desc:"Uses a web fingerprinting tool to enumerate the app's technology stack.",
+  prereq:["A test App Service web app; the whatweb tool (or similar)."],
+  steps:[
+   ["Run a web fingerprinting tool against the app.","whatweb -a 3 https://<your-app>.azurewebsites.net"]
+  ],
+  expected:"A 'Web fingerprinting detected' alert is raised for the web app.",
+  cleanup:"None required."},
+ {id:"APP-04",title:"Vulnerability scan of the web app",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Vulnerability scanner detected",
+  desc:"Runs a web vulnerability scanner against the test app -- the scan signatures trigger a scanner-detection alert.",
+  prereq:["A test App Service web app; a vulnerability scanner such as Nikto or OWASP ZAP."],
+  steps:[
+   ["Run a vulnerability scan against your own test app.","nikto -h https://<your-app>.azurewebsites.net"]
+  ],
+  expected:"A 'Vulnerability scanner detected' alert (Nikto / generic / Joomla / Drupal variant) is raised.",
+  cleanup:"None required."},
+ {id:"APP-05",title:"Request with a suspicious user agent",type:"Executable",sev:"Medium",mitre:"Initial Access",
+  alert:"Suspicious User Agent detected",
+  desc:"Sends HTTP requests with a user-agent string associated with attack tooling.",
+  prereq:["A test App Service web app; curl."],
+  steps:[
+   ["Send requests using a suspicious user-agent string.","curl -A \"sqlmap/1.7-dev\" \"https://<your-app>.azurewebsites.net/\""]
+  ],
+  expected:"A 'Suspicious User Agent detected' alert is raised for the web app.",
+  cleanup:"None required."},
+ {id:"APP-06",title:"Connection from an anomalous IP address",type:"Reference",sev:"Low",mitre:"Initial Access",
+  alert:"Connection to web page from anomalous IP address detected",
+  desc:"Detects connections from IP addresses anomalous for the web app. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it baselines client IPs and flags anomalous origins.",""]
+  ],
+  expected:"A 'Connection to web page from anomalous IP address detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-07",title:"Access to a possibly vulnerable web page",type:"Executable",sev:"Low",mitre:"Pre-Attack",
+  alert:"Suspicious access to possibly vulnerable web page detected",
+  desc:"Requests well-known sensitive paths (admin consoles, config files) commonly probed by attackers.",
+  prereq:["A test App Service web app; curl."],
+  steps:[
+   ["Request a series of commonly probed sensitive paths.","for p in /wp-login.php /phpmyadmin/ /.env /admin /.git/config; do curl -s -o /dev/null -w \"%{http_code} $p\\n\" \"https://<your-app>.azurewebsites.net$p\"; done"]
+  ],
+  expected:"A 'Suspicious access to possibly vulnerable web page detected' alert is raised.",
+  cleanup:"None required."},
+ {id:"APP-08",title:"Dangling DNS record for an App Service",type:"Executable",sev:"High",mitre:"Initial Access",
+  alert:"Dangling DNS record for an App Service resource detected",
+  desc:"Leaves a DNS CNAME pointing at a deleted App Service hostname -- a subdomain-takeover risk.",
+  prereq:["A custom domain you control in Azure DNS; a disposable App Service."],
+  steps:[
+   ["Create a CNAME in your DNS zone pointing to a test App Service hostname.","az network dns record-set cname set-record -g DfC-PoC-RG -z <your-zone> -n poc-dangling -c <temp-app>.azurewebsites.net"],
+   ["Delete the App Service so the CNAME becomes dangling.","az webapp delete -g DfC-PoC-RG -n <temp-app>"]
+  ],
+  expected:"A 'Dangling DNS record for an App Service resource detected' alert is raised.",
+  cleanup:"Delete the dangling CNAME record: az network dns record-set cname delete -g DfC-PoC-RG -z <your-zone> -n poc-dangling"},
+ {id:"APP-09",title:"Linux commands run on a Windows App Service",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"An attempt to run Linux commands on a Windows App Service",
+  desc:"Detects Linux command syntax executed against a Windows-hosted app -- usually exploit attempts. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it spots Linux command patterns on a Windows runtime.",""]
+  ],
+  expected:"An 'An attempt to run Linux commands on a Windows App Service' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-10",title:"Suspicious PHP execution",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"Suspicious PHP execution detected",
+  desc:"Detects PHP processes executing suspicious commands -- typically a web shell. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags PHP runtime spawning shell/command activity.",""]
+  ],
+  expected:"A 'Suspicious PHP execution detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-11",title:"PHP file in the upload folder",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"PHP file in upload folder",
+  desc:"Detects executable PHP files dropped into an upload directory -- a web-shell delivery technique. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags .php files appearing in upload folders.",""]
+  ],
+  expected:"A 'PHP file in upload folder' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-12",title:"Suspicious WordPress theme invocation",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"Suspicious WordPress theme invocation detected",
+  desc:"Detects WordPress theme files invoked in a way consistent with a planted backdoor. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags abnormal direct invocation of theme PHP files.",""]
+  ],
+  expected:"A 'Suspicious WordPress theme invocation detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-13",title:"Digital currency mining behavior (App Service)",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"Digital currency mining related behavior detected",
+  desc:"Detects crypto-mining activity within an App Service. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it correlates process behavior with known mining indicators.",""]
+  ],
+  expected:"A 'Digital currency mining related behavior detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-14",title:"Fileless attack behavior (App Service)",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"Fileless attack behavior detected",
+  desc:"Detects in-memory attack behavior within an App Service process. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags memory-resident behavior with no file on disk.",""]
+  ],
+  expected:"A 'Fileless attack behavior detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-15",title:"Fileless attack technique (App Service)",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"Fileless attack technique detected",
+  desc:"Detects specific fileless techniques (injection, hollowing) in an App Service. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it identifies known fileless technique signatures in memory.",""]
+  ],
+  expected:"A 'Fileless attack technique detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-16",title:"Fileless attack toolkit (App Service)",type:"Reference",sev:"High",mitre:"Defense Evasion",
+  alert:"Fileless attack toolkit detected",
+  desc:"Detects fileless attack toolkits operating inside an App Service. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags memory artifacts of known fileless toolkits.",""]
+  ],
+  expected:"A 'Fileless attack toolkit detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-17",title:"Reverse shell from an App Service",type:"Reference",sev:"Medium",mitre:"Exfiltration",
+  alert:"Suspected reverse shell",
+  desc:"Detects an App Service process establishing an interactive outbound shell. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags an outbound interactive shell connection.",""]
+  ],
+  expected:"A 'Suspected reverse shell' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-18",title:"Suspicious download using certutil (App Service)",type:"Reference",sev:"Medium",mitre:"Defense Evasion",
+  alert:"Suspicious download using Certutil detected",
+  desc:"Detects use of certutil as a downloader within an App Service. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags certutil invoked to fetch remote content.",""]
+  ],
+  expected:"A 'Suspicious download using Certutil detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-19",title:"High-privilege command in an App Service",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"Attempt to run high privilege command detected",
+  desc:"Detects attempts to run privileged commands within an App Service runtime. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags privileged command execution attempts.",""]
+  ],
+  expected:"An 'Attempt to run high privilege command detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-20",title:"Process execution from a temporary folder",type:"Reference",sev:"Medium",mitre:"Execution",
+  alert:"Process execution from temporary folder",
+  desc:"Detects executables launched from temp directories within an App Service. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it flags process launches from temp paths.",""]
+  ],
+  expected:"A 'Process execution from temporary folder' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-21",title:"FTP interface connection from a flagged IP",type:"Reference",sev:"Medium",mitre:"Pre-Attack",
+  alert:"An IP that connected to your Azure App Service FTP Interface was found in Threat Intelligence",
+  desc:"Detects connections to the App Service FTP endpoint from threat-intelligence-flagged IPs. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled; FTP/FTPS enabled on the test app."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it matches FTP-interface client IPs against threat intelligence.",""]
+  ],
+  expected:"The 'An IP that connected to your Azure App Service FTP Interface...' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-22",title:"Phishing content hosted on Azure Web Apps",type:"Reference",sev:"High",mitre:"Collection",
+  alert:"Phishing content hosted on Azure Webapps",
+  desc:"Detects when a web app hosts content used in an active phishing campaign. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: phishing URLs reported elsewhere are matched to the hosting web app.",""]
+  ],
+  expected:"A 'Phishing content hosted on Azure Webapps' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-23",title:"Spam folder referrer detected",type:"Reference",sev:"Low",mitre:"Collection",
+  alert:"Spam folder referrer detected",
+  desc:"Detects HTTP referrers indicating the app is linked from spam campaigns. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it inspects referrer headers for spam-campaign indicators.",""]
+  ],
+  expected:"A 'Spam folder referrer detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-24",title:"Communication with a suspicious domain",type:"Reference",sev:"Medium",mitre:"Command And Control",
+  alert:"Communication with suspicious domain identified by threat intelligence",
+  desc:"Detects the web app communicating with domains flagged by threat intelligence. Validate via Sample alerts.",
+  prereq:["AppServices plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the AppServices plan.",""],
+   ["Recognize the alert: it matches outbound domains against threat-intelligence feeds.",""]
+  ],
+  expected:"A 'Communication with suspicious domain identified by threat intelligence' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"APP-25",title:"Validate App Service alert delivery pipeline",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Sample alerts for the AppServices plan",
+  desc:"Confirms App Service alerts reach the portal, email, SIEM/Log Analytics and workflow automation.",
+  prereq:["Email notifications, Continuous export and (optionally) a workflow automation configured."],
+  steps:[
+   ["Generate sample alerts for the AppServices plan (Security alerts > Sample alerts).",""],
+   ["Confirm the alerts appear in Defender for Cloud and the Microsoft Defender portal.",""],
+   ["Confirm delivery to email recipients and your SIEM / Log Analytics workspace.","az security alert list --query \"[?contains(properties.alertDisplayName,'App Service')]\" -o table"]
+  ],
+  expected:"App Service sample alerts are visible in the portal, email and SIEM, and trigger configured automation.",
+  cleanup:"None."}
+]; /*=APP=*/
+const KV_SCENARIOS = [
+ {id:"KV-01",title:"Access a key vault from a suspicious IP",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Access from a suspicious IP address to a key vault",
+  desc:"Detects key vault access from IP addresses flagged by Microsoft threat intelligence. Cannot be safely forced; validate via Sample alerts.",
+  prereq:["KeyVaults plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the KeyVaults plan.",""],
+   ["Recognize the alert: it matches the caller IP against threat-intelligence feeds.",""]
+  ],
+  expected:"An 'Access from a suspicious IP address to a key vault' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"KV-02",title:"Access a key vault from a Tor exit node",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Access from a TOR exit node to a key vault",
+  desc:"Accesses a key vault while routed through the Tor anonymization network.",
+  prereq:["A test Key Vault; the Tor Browser; a signed-in session or token usable through Tor."],
+  steps:[
+   ["Open the Tor Browser to obtain a Tor circuit.",""],
+   ["Through a Tor-routed session, sign in to the Azure portal and open the test Key Vault, or call the Key Vault REST API via the Tor SOCKS proxy 127.0.0.1:9150.",""]
+  ],
+  expected:"An 'Access from a TOR exit node to a key vault' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-03",title:"Denied access to a key vault from a suspicious IP",type:"Reference",sev:"Low",mitre:"Credential Access",
+  alert:"Denied access from a suspicious IP to a key vault",
+  desc:"Detects denied access attempts originating from threat-intelligence-flagged IPs. Validate via Sample alerts.",
+  prereq:["KeyVaults plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the KeyVaults plan.",""],
+   ["Recognize the alert: it correlates a denied request with a suspicious source IP.",""]
+  ],
+  expected:"A 'Denied access from a suspicious IP to a key vault' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"KV-04",title:"High volume of operations in a key vault",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"High volume of operations in a key vault",
+  desc:"Drives an abnormally high number of operations against a single key vault in a short window.",
+  prereq:["A test Key Vault with several secrets; data-plane permissions."],
+  steps:[
+   ["Run a tight loop performing many secret operations.","for i in $(seq 1 200); do az keyvault secret show --vault-name <kv-name> --name test-secret -o none; done"]
+  ],
+  expected:"A 'High volume of operations in a key vault' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-05",title:"User accessing a high volume of key vaults",type:"Executable",sev:"Medium",mitre:"Discovery",
+  alert:"User accessed high volume of key vaults",
+  desc:"Has a single identity access many key vaults in quick succession, mimicking secret-sweeping.",
+  prereq:["Multiple test Key Vaults the identity can access."],
+  steps:[
+   ["Loop over every key vault in the subscription and read from each.","for KV in $(az keyvault list --query \"[].name\" -o tsv); do az keyvault secret list --vault-name \"$KV\" -o none; done"]
+  ],
+  expected:"A 'User accessed high volume of key vaults' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-06",title:"Suspicious secret listing and query",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Suspicious secret listing and query in a key vault",
+  desc:"Lists every secret in a vault and then retrieves each value -- a classic secret-harvesting pattern.",
+  prereq:["A test Key Vault with multiple secrets; get/list permissions."],
+  steps:[
+   ["List all secrets, then retrieve each value.","for S in $(az keyvault secret list --vault-name <kv-name> --query \"[].name\" -o tsv); do az keyvault secret show --vault-name <kv-name> --name \"$S\" -o none; done"]
+  ],
+  expected:"A 'Suspicious secret listing and query in a key vault' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-07",title:"Suspicious policy change followed by secret query",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Suspicious policy change and secret query in a key vault",
+  desc:"Modifies the vault access policy to grant secret permissions, then immediately queries secrets.",
+  prereq:["A test Key Vault using the access-policy permission model; rights to change policy."],
+  steps:[
+   ["Grant a test identity get/list secret permissions via an access policy.","az keyvault set-policy --name <kv-name> --object-id <test-object-id> --secret-permissions get list"],
+   ["Immediately query a secret with that identity.","az keyvault secret show --vault-name <kv-name> --name test-secret"]
+  ],
+  expected:"A 'Suspicious policy change and secret query in a key vault' alert is raised.",
+  cleanup:"az keyvault delete-policy --name <kv-name> --object-id <test-object-id>"},
+ {id:"KV-08",title:"Unusual application accessed a key vault",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual application accessed a key vault",
+  desc:"Detects a client application accessing the vault that has not done so before. Validate via Sample alerts.",
+  prereq:["KeyVaults plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the KeyVaults plan.",""],
+   ["Recognize the alert: it baselines accessing applications and flags new ones.",""]
+  ],
+  expected:"An 'Unusual application accessed a key vault' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"KV-09",title:"Unusual user accessed a key vault",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual user accessed a key vault",
+  desc:"Detects an identity accessing the vault that deviates from the established user baseline. Validate via Sample alerts.",
+  prereq:["KeyVaults plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the KeyVaults plan.",""],
+   ["Recognize the alert: it baselines accessing users and flags anomalies.",""]
+  ],
+  expected:"An 'Unusual user accessed a key vault' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"KV-10",title:"Unusual user-application pair accessed a key vault",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual user-application pair accessed a key vault",
+  desc:"Detects an unusual combination of user and application accessing the vault. Validate via Sample alerts.",
+  prereq:["KeyVaults plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the KeyVaults plan.",""],
+   ["Recognize the alert: it baselines user+application pairs together.",""]
+  ],
+  expected:"An 'Unusual user-application pair accessed a key vault' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"KV-11",title:"Unusual operation pattern in a key vault",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual operation pattern in a key vault",
+  desc:"Performs a mix of operations (keys, secrets, certificates, policy) inconsistent with the vault's normal usage.",
+  prereq:["A test Key Vault with keys, secrets and certificates."],
+  steps:[
+   ["Run a varied burst of operations across object types.","az keyvault key list --vault-name <kv-name> -o none; az keyvault certificate list --vault-name <kv-name> -o none; az keyvault secret list --vault-name <kv-name> -o none; az keyvault show --name <kv-name> -o none"]
+  ],
+  expected:"An 'Unusual operation pattern in a key vault' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-12",title:"Unusual access denied across many key vaults",type:"Executable",sev:"Low",mitre:"Discovery",
+  alert:"Unusual access denied - User accessing high volume of key vaults denied",
+  desc:"Has one identity attempt to access many key vaults it is not authorized for, generating many denials.",
+  prereq:["Multiple key vaults; a test identity with no permissions on them."],
+  steps:[
+   ["As the unauthorized identity, loop over all vaults attempting to read secrets (each attempt is denied).","for KV in $(az keyvault list --query \"[].name\" -o tsv); do az keyvault secret list --vault-name \"$KV\" -o none 2>/dev/null; done"]
+  ],
+  expected:"An 'Unusual access denied - User accessing high volume of key vaults denied' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-13",title:"Unusual access denied for an unusual user",type:"Executable",sev:"Low",mitre:"Initial Access",
+  alert:"Unusual access denied - Unusual user accessing key vault denied",
+  desc:"Has a new/unusual identity repeatedly attempt -- and be denied -- access to a key vault.",
+  prereq:["A test Key Vault; a second test identity with no permissions on it."],
+  steps:[
+   ["Sign in as the unusual identity and repeatedly attempt to read from the vault.","for i in $(seq 1 15); do az keyvault secret list --vault-name <kv-name> -o none 2>/dev/null; done"]
+  ],
+  expected:"An 'Unusual access denied - Unusual user accessing key vault denied' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-14",title:"Unusual access from an external suspicious IP",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual access to the key vault from a suspicious IP (Non-Microsoft or external)",
+  desc:"Detects unusual key vault access originating from a non-Microsoft / external suspicious IP. Validate via Sample alerts.",
+  prereq:["KeyVaults plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the KeyVaults plan.",""],
+   ["Recognize the alert: it combines the unusual-access and suspicious-external-IP signals.",""]
+  ],
+  expected:"The 'Unusual access to the key vault from a suspicious IP...' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"KV-15",title:"Bulk secret enumeration via PowerShell",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Suspicious secret listing and query in a key vault",
+  desc:"Method variant of KV-06 -- harvests every secret using the Az PowerShell module instead of the CLI, to confirm the detection is client-agnostic.",
+  prereq:["A test Key Vault with multiple secrets; Az PowerShell module."],
+  steps:[
+   ["From PowerShell, enumerate and read every secret in the vault.","Get-AzKeyVaultSecret -VaultName '<kv-name>' | ForEach-Object { Get-AzKeyVaultSecret -VaultName '<kv-name>' -Name $_.Name -AsPlainText }"]
+  ],
+  expected:"A 'Suspicious secret listing and query in a key vault' alert is raised regardless of the client used.",
+  cleanup:"None required."},
+ {id:"KV-16",title:"Self-assign a Key Vault RBAC role then read secrets",type:"Executable",sev:"Medium",mitre:"Privilege Escalation",
+  alert:"Suspicious policy change and secret query in a key vault",
+  desc:"RBAC variant of KV-07 -- assigns the Key Vault Secrets User role to an identity, then immediately reads secrets.",
+  prereq:["A test Key Vault using the Azure RBAC permission model."],
+  steps:[
+   ["Assign the Key Vault Secrets User role on the vault to a test identity.","az role assignment create --assignee <test-object-id> --role \"Key Vault Secrets User\" --scope $(az keyvault show --name <kv-name> --query id -o tsv)"],
+   ["Immediately read a secret with that identity.","az keyvault secret show --vault-name <kv-name> --name test-secret"]
+  ],
+  expected:"A 'Suspicious policy change and secret query in a key vault' alert is raised.",
+  cleanup:"az role assignment delete --assignee <test-object-id> --role \"Key Vault Secrets User\" --scope <vault-id>"},
+ {id:"KV-17",title:"Service principal sweeps many key vaults",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"User accessed high volume of key vaults",
+  desc:"Identity variant of KV-05 -- uses a service principal (not an interactive user) to access many vaults.",
+  prereq:["A test service principal with access to multiple vaults."],
+  steps:[
+   ["Sign in as the service principal.","az login --service-principal -u <app-id> -p <secret> --tenant <tenant-id>"],
+   ["Loop over all key vaults and read from each.","for KV in $(az keyvault list --query \"[].name\" -o tsv); do az keyvault secret list --vault-name \"$KV\" -o none; done"]
+  ],
+  expected:"A 'User accessed high volume of key vaults' alert is raised for the service principal.",
+  cleanup:"Sign back in as your normal identity: az login"},
+ {id:"KV-18",title:"First access to a key vault by a brand-new identity",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual user accessed a key vault",
+  desc:"Has a newly created identity access a vault for the first time, deviating from the user baseline.",
+  prereq:["A test Key Vault with an established access baseline; a freshly created test identity granted access."],
+  steps:[
+   ["Sign in as the brand-new identity and read from the vault.","az keyvault secret list --vault-name <kv-name>"]
+  ],
+  expected:"An 'Unusual user accessed a key vault' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-19",title:"Repeated denied access by an unauthorized identity",type:"Executable",sev:"Low",mitre:"Initial Access",
+  alert:"Unusual access denied - Unusual user accessing key vault denied",
+  desc:"Generates a burst of denied operations from an identity with no permissions on the vault.",
+  prereq:["A test Key Vault; a test identity deliberately not granted any permission."],
+  steps:[
+   ["As the unauthorized identity, repeatedly attempt key, secret and certificate reads.","for i in $(seq 1 20); do az keyvault key list --vault-name <kv-name> -o none 2>/dev/null; az keyvault secret list --vault-name <kv-name> -o none 2>/dev/null; done"]
+  ],
+  expected:"An 'Unusual access denied - Unusual user accessing key vault denied' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-20",title:"Bulk export of keys and certificates",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"High volume of operations in a key vault",
+  desc:"Performs a high-volume export of cryptographic material (keys and certificates) from the vault.",
+  prereq:["A test Key Vault with several keys and certificates; get/download permissions."],
+  steps:[
+   ["Loop over all keys and certificates and retrieve each.","for K in $(az keyvault key list --vault-name <kv-name> --query \"[].name\" -o tsv); do az keyvault key show --vault-name <kv-name> --name \"$K\" -o none; done; for C in $(az keyvault certificate list --vault-name <kv-name> --query \"[].name\" -o tsv); do az keyvault certificate show --vault-name <kv-name> --name \"$C\" -o none; done"]
+  ],
+  expected:"A 'High volume of operations in a key vault' alert is raised.",
+  cleanup:"None required."},
+ {id:"KV-21",title:"Mass deletion of key vault objects",type:"Executable",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual operation pattern in a key vault",
+  desc:"Deletes many vault objects in quick succession -- an operation pattern unusual for a healthy vault.",
+  prereq:["A test Key Vault with disposable secrets; soft-delete enabled so objects can be recovered."],
+  steps:[
+   ["Delete every disposable test secret in quick succession.","for S in $(az keyvault secret list --vault-name <kv-name> --query \"[?starts_with(name,'poc-')].name\" -o tsv); do az keyvault secret delete --vault-name <kv-name> --name \"$S\"; done"]
+  ],
+  expected:"An 'Unusual operation pattern in a key vault' alert is raised.",
+  cleanup:"Recover the soft-deleted secrets: az keyvault secret recover --vault-name <kv-name> --name <name>"},
+ {id:"KV-22",title:"Access a key vault from an unusual application",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Unusual application accessed a key vault",
+  desc:"Method variant of KV-08 -- access the vault from a custom application/SDK with a distinct app identity to exercise the unusual-application detection.",
+  prereq:["A test Key Vault; a custom application registration not previously seen accessing it."],
+  steps:[
+   ["Authenticate a new custom application and have it read from the vault, or validate via **Sample alerts**.",""],
+   ["Recognize the alert: it flags the new application identity against the access baseline.",""]
+  ],
+  expected:"An 'Unusual application accessed a key vault' alert is raised.",
+  cleanup:"None."},
+ {id:"KV-23",title:"Generate Key Vault sample alerts",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Sample alerts for the KeyVaults plan",
+  desc:"Baseline pipeline check -- generate sample alerts for the Key Vault plan and confirm they appear in the portal.",
+  prereq:["Subscription Contributor role."],
+  steps:[
+   ["Open Security alerts > Sample alerts, select the subscription and the KeyVaults plan, and create sample alerts.",""],
+   ["Confirm the sample alerts appear in Defender for Cloud > Security alerts.","az security alert list --query \"[?contains(properties.alertDisplayName,'key vault')]\" -o table"]
+  ],
+  expected:"Key Vault sample alerts appear in the portal within a few minutes.",
+  cleanup:"None."},
+ {id:"KV-24",title:"Validate Key Vault alerts in SIEM / Log Analytics",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Key Vault alert delivered to Log Analytics / SIEM",
+  desc:"Confirms Key Vault alerts flow to your Log Analytics workspace and SIEM via Continuous export.",
+  prereq:["Continuous export to a Log Analytics workspace configured; optionally a Sentinel/Defender XDR connector."],
+  steps:[
+   ["Run KV-23 to generate Key Vault alerts.",""],
+   ["In the Log Analytics workspace, query the SecurityAlert table for Key Vault alerts.","SecurityAlert | where ProductName == 'Azure Security Center' | where DisplayName contains 'key vault' | sort by TimeGenerated desc"]
+  ],
+  expected:"Key Vault alerts are present in the SecurityAlert table and in the connected SIEM.",
+  cleanup:"None."},
+ {id:"KV-25",title:"Validate Key Vault alerts via email & automation",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Key Vault alert delivered to email / workflow automation",
+  desc:"Confirms Key Vault alerts reach email recipients and trigger workflow automation (Logic Apps).",
+  prereq:["Email notifications configured; a workflow automation that triggers on security alerts."],
+  steps:[
+   ["Run KV-23 to generate Key Vault alerts, or run an Executable Key Vault scenario.",""],
+   ["Confirm the alert email arrives at the configured recipients.",""],
+   ["Confirm the workflow automation's Logic App run history shows a triggered run for the alert.",""]
+  ],
+  expected:"Key Vault alerts generate an email and a workflow-automation run.",
+  cleanup:"None."}
+]; /*=KV=*/
+const RM_SCENARIOS = [
+ {id:"RM-01",title:"Resource Manager operation from a suspicious IP",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Azure Resource Manager operation from suspicious IP address",
+  desc:"Performs an Azure management-plane operation while routed through the Tor network.",
+  prereq:["The Tor Browser or Tor proxy on a test workstation; an identity with management rights in the PoC subscription."],
+  steps:[
+   ["Start Tor to obtain a circuit, then sign in to the Azure portal through a Tor-routed browser session.",""],
+   ["Perform a management operation (e.g. create or tag a resource group) from the Tor-routed session.",""]
+  ],
+  expected:"An 'Azure Resource Manager operation from suspicious IP address' alert is raised.",
+  cleanup:"Remove any test resources created."},
+ {id:"RM-02",title:"Resource Manager operation from a suspicious proxy IP",type:"Executable",sev:"Medium",mitre:"Defense Evasion",
+  alert:"Azure Resource Manager operation from suspicious proxy IP address",
+  desc:"Performs a management operation through an anonymizing proxy, which Defender flags as proxy-obscured activity.",
+  prereq:["An anonymizing proxy (e.g. the Tor SOCKS proxy 127.0.0.1:9150) configured for the Azure CLI."],
+  steps:[
+   ["Route the Azure CLI through the proxy and run a management command.","HTTPS_PROXY=socks5://127.0.0.1:9150 az group update -n DfC-PoC-RG --set tags.poc=rm-test"]
+  ],
+  expected:"An 'Azure Resource Manager operation from suspicious proxy IP address' alert is raised.",
+  cleanup:"Remove the test tag: az group update -n DfC-PoC-RG --remove tags.poc"},
+ {id:"RM-03",title:"MicroBurst toolkit - subscription enumeration",type:"Reference",sev:"Low",mitre:"Collection",
+  alert:"MicroBurst exploitation toolkit used to enumerate resources in your subscriptions",
+  desc:"Detects the open-source MicroBurst toolkit enumerating subscription resources. Documented for recognition; validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it fingerprints MicroBurst's enumeration API call patterns.",""]
+  ],
+  expected:"The MicroBurst subscription-enumeration alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-04",title:"MicroBurst toolkit - extract key vault keys",type:"Reference",sev:"High",mitre:"Credential Access",
+  alert:"MicroBurst exploitation toolkit used to extract keys from your Azure key vaults",
+  desc:"Detects MicroBurst extracting key material from key vaults. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it identifies MicroBurst's key-extraction call pattern.",""]
+  ],
+  expected:"The MicroBurst key-vault-keys alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-05",title:"MicroBurst toolkit - extract storage account keys",type:"Reference",sev:"Low",mitre:"Collection",
+  alert:"MicroBurst exploitation toolkit used to extract keys to your storage accounts",
+  desc:"Detects MicroBurst harvesting storage account keys. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it identifies MicroBurst's storage-key-extraction pattern.",""]
+  ],
+  expected:"The MicroBurst storage-keys alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-06",title:"MicroBurst toolkit - extract key vault secrets",type:"Reference",sev:"High",mitre:"Credential Access",
+  alert:"MicroBurst exploitation toolkit used to extract secrets from your Azure key vaults",
+  desc:"Detects MicroBurst extracting secrets from key vaults. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it identifies MicroBurst's secret-extraction pattern.",""]
+  ],
+  expected:"The MicroBurst key-vault-secrets alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-07",title:"MicroBurst toolkit - execute code on a VM",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"MicroBurst exploitation toolkit used to execute code on your virtual machine",
+  desc:"Detects MicroBurst running code on a VM via management-plane operations (e.g. run-command). Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags MicroBurst's code-execution-on-VM technique.",""]
+  ],
+  expected:"The MicroBurst execute-code-on-VM alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-08",title:"MicroBurst toolkit - Automation account credential theft",type:"Reference",sev:"High",mitre:"Credential Access",
+  alert:"Usage of MicroBurst exploitation toolkit to run an arbitrary code or exfiltrate Azure Automation account credentials",
+  desc:"Detects MicroBurst abusing Azure Automation accounts to run code or exfiltrate credentials. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags MicroBurst's Automation-account abuse pattern.",""]
+  ],
+  expected:"The MicroBurst Automation-account alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-09",title:"PowerZure toolkit - resource enumeration",type:"Reference",sev:"High",mitre:"Collection",
+  alert:"PowerZure exploitation toolkit used to enumerate resources",
+  desc:"Detects the open-source PowerZure toolkit enumerating Azure resources. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it fingerprints PowerZure's enumeration behavior.",""]
+  ],
+  expected:"The PowerZure resource-enumeration alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-10",title:"PowerZure toolkit - storage enumeration",type:"Reference",sev:"High",mitre:"Collection",
+  alert:"PowerZure exploitation toolkit used to enumerate storage containers, shares, and tables",
+  desc:"Detects PowerZure enumerating storage containers, shares and tables. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags PowerZure's storage-enumeration pattern.",""]
+  ],
+  expected:"The PowerZure storage-enumeration alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-11",title:"PowerZure toolkit - execute a Runbook",type:"Reference",sev:"High",mitre:"Execution",
+  alert:"PowerZure exploitation toolkit used to execute a Runbook in your subscription",
+  desc:"Detects PowerZure executing an Automation Runbook for code execution. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags PowerZure's Runbook-execution technique.",""]
+  ],
+  expected:"The PowerZure execute-Runbook alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-12",title:"PowerZure toolkit - extract Runbook content",type:"Reference",sev:"High",mitre:"Collection",
+  alert:"PowerZure exploitation toolkit used to extract Runbooks content",
+  desc:"Detects PowerZure reading Runbook content to harvest embedded secrets/logic. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags PowerZure's Runbook-content extraction.",""]
+  ],
+  expected:"The PowerZure extract-Runbook-content alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-13",title:"PowerZure toolkit - elevate access",type:"Reference",sev:"High",mitre:"Privilege Escalation",
+  alert:"PowerZure exploitation toolkit used to elevate access from Microsoft Entra ID to Azure",
+  desc:"Detects PowerZure escalating from Microsoft Entra ID privileges to Azure resource access. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags the Entra-to-Azure elevation technique.",""]
+  ],
+  expected:"The PowerZure elevate-access alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-14",title:"Azurite toolkit detected",type:"Reference",sev:"High",mitre:"Collection",
+  alert:"PREVIEW - FSecure's Azurite toolkit detected",
+  desc:"Detects the Azurite reconnaissance toolkit running against the environment. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it fingerprints the Azurite toolkit's activity.",""]
+  ],
+  expected:"The Azurite toolkit alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-15",title:"Suspicious creation of compute resources",type:"Reference",sev:"Medium",mitre:"Impact",
+  alert:"Suspicious creation of compute resources detected",
+  desc:"Detects bulk/anomalous creation of compute resources (often crypto-mining abuse). Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it baselines compute-creation activity and flags anomalous spikes.",""]
+  ],
+  expected:"A 'Suspicious creation of compute resources detected' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-16",title:"Suspicious elevate-access operation",type:"Executable",sev:"Medium",mitre:"Privilege Escalation",
+  alert:"Suspicious elevate access operation",
+  desc:"Invokes the tenant-level elevateAccess operation, which grants the caller User Access Administrator at root scope.",
+  prereq:["A Microsoft Entra Global Administrator identity in the PoC tenant."],
+  steps:[
+   ["As a Global Administrator, invoke the elevateAccess operation.","az rest --method post --url \"https://management.azure.com/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01\""]
+  ],
+  expected:"A 'Suspicious elevate access operation' alert is raised.",
+  cleanup:"Remove the root-scope User Access Administrator assignment created by elevateAccess (Entra admin center > Properties, or az role assignment delete at scope '/')."},
+ {id:"RM-17",title:"Create a privileged custom role",type:"Executable",sev:"Informational",mitre:"Privilege Escalation",
+  alert:"Privileged custom role created for your subscription in a suspicious way",
+  desc:"Creates a custom RBAC role with broad/privileged permissions at subscription scope.",
+  prereq:["User Access Administrator or Owner on the PoC subscription."],
+  steps:[
+   ["Create a custom role definition with wildcard actions.","az role definition create --role-definition '{\"Name\":\"PoC-Privileged-Role\",\"Description\":\"DfC PoC test role\",\"Actions\":[\"*\"],\"AssignableScopes\":[\"/subscriptions/<sub-id>\"]}'"]
+  ],
+  expected:"A 'Privileged custom role created for your subscription in a suspicious way' alert is raised.",
+  cleanup:"az role definition delete --name \"PoC-Privileged-Role\""},
+ {id:"RM-18",title:"Suspicious key vault recovery",type:"Executable",sev:"Medium",mitre:"Lateral Movement",
+  alert:"Suspicious key vault recovery detected",
+  desc:"Recovers a soft-deleted key vault -- a technique used to regain access to previously removed secrets.",
+  prereq:["A soft-deleted test key vault in the subscription."],
+  steps:[
+   ["List soft-deleted vaults, then recover one.","az keyvault list-deleted -o table\naz keyvault recover --name <deleted-kv-name>"]
+  ],
+  expected:"A 'Suspicious key vault recovery detected' alert is raised.",
+  cleanup:"Delete the recovered test vault again if it is no longer needed."},
+ {id:"RM-19",title:"High-risk Credential Access operation by a service principal",type:"Reference",sev:"Medium",mitre:"Credential Access",
+  alert:"Suspicious invocation of a high-risk 'Credential Access' operation by a service principal detected (Preview)",
+  desc:"Detects a service principal invoking a high-risk credential-access operation outside its normal pattern. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it baselines service-principal behavior and flags high-risk credential operations.",""]
+  ],
+  expected:"The high-risk Credential Access operation alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-20",title:"High-risk Privilege Escalation operation by a service principal",type:"Reference",sev:"Medium",mitre:"Privilege Escalation",
+  alert:"Suspicious invocation of a high-risk 'Privilege Escalation' operation by a service principal detected (Preview)",
+  desc:"Detects a service principal invoking a high-risk privilege-escalation operation. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags anomalous high-risk privilege-escalation calls by service principals.",""]
+  ],
+  expected:"The high-risk Privilege Escalation operation alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-21",title:"High-risk Impact operation invoked",type:"Reference",sev:"Medium",mitre:"Impact",
+  alert:"Suspicious invocation of a high-risk 'Impact' operation detected (Preview)",
+  desc:"Detects invocation of a high-risk impact operation (e.g. mass deletion) outside the normal pattern. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it baselines management activity and flags high-risk impact operations.",""]
+  ],
+  expected:"The high-risk Impact operation alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-22",title:"Suspicious Azure role assignment",type:"Executable",sev:"Medium",mitre:"Lateral Movement",
+  alert:"Suspicious Azure role assignment detected (Preview)",
+  desc:"Grants a high-privilege role to an identity in a manner inconsistent with normal administration.",
+  prereq:["User Access Administrator or Owner on the PoC subscription; a test identity."],
+  steps:[
+   ["Assign the Owner role at subscription scope to a test identity.","az role assignment create --assignee <test-object-id> --role Owner --scope /subscriptions/<sub-id>"]
+  ],
+  expected:"A 'Suspicious Azure role assignment detected (Preview)' alert is raised.",
+  cleanup:"az role assignment delete --assignee <test-object-id> --role Owner --scope /subscriptions/<sub-id>"},
+ {id:"RM-23",title:"Suspicious classic role assignment",type:"Reference",sev:"High",mitre:"Defense Evasion",
+  alert:"Suspicious classic role assignment detected (Preview)",
+  desc:"Detects use of legacy classic administrator role assignments -- an uncommon, evasion-associated technique. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it flags classic co-administrator assignments, which are rarely legitimate today.",""]
+  ],
+  expected:"A 'Suspicious classic role assignment detected (Preview)' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-24",title:"NetSPI persistence techniques",type:"Reference",sev:"High",mitre:"Persistence",
+  alert:"Usage of NetSPI techniques to maintain persistence in your Azure environment",
+  desc:"Detects persistence techniques published by NetSPI being used in the environment. Validate via Sample alerts.",
+  prereq:["Arm plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Arm plan.",""],
+   ["Recognize the alert: it fingerprints known NetSPI persistence techniques.",""]
+  ],
+  expected:"The NetSPI persistence alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"RM-25",title:"Validate Resource Manager alert delivery pipeline",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Sample alerts for the Arm plan",
+  desc:"Confirms Resource Manager alerts reach the portal, email, SIEM/Log Analytics and workflow automation.",
+  prereq:["Email notifications, Continuous export and (optionally) a workflow automation configured."],
+  steps:[
+   ["Generate sample alerts for the Arm plan (Security alerts > Sample alerts).",""],
+   ["Confirm the alerts appear in Defender for Cloud and the Microsoft Defender portal.",""],
+   ["Confirm delivery to email recipients and your SIEM / Log Analytics workspace.","az security alert list --query \"[?contains(properties.alertDisplayName,'Resource Manager')]\" -o table"]
+  ],
+  expected:"Resource Manager sample alerts are visible in the portal, email and SIEM, and trigger configured automation.",
+  cleanup:"None."}
+]; /*=RM=*/
+const API_SCENARIOS = [
+ {id:"API-01",title:"Onboard an API to Defender for APIs",type:"Executable",sev:"Informational",mitre:"Discovery",
+  alert:"API onboarded and monitored by Defender for APIs",
+  desc:"Confirms Defender for APIs is active by onboarding an API in API Management to security monitoring -- the prerequisite for every other API scenario.",
+  prereq:["The Api plan (P1) enabled; an Azure API Management instance with at least one API."],
+  steps:[
+   ["In Defender for Cloud, open the **API security** dashboard (or Workload protections > APIs).",""],
+   ["Select the API Management instance and **Onboard** the API to Defender for APIs.",""],
+   ["Generate baseline traffic so Defender for APIs can profile the endpoints.","curl \"https://<apim-name>.azure-api.net/<api-path>/<operation>\" -H \"Ocp-Apim-Subscription-Key: <key>\""]
+  ],
+  expected:"The API appears as monitored in the API security dashboard and begins building a traffic baseline.",
+  cleanup:"None required."},
+ {id:"API-02",title:"Suspicious user agent (documented test)",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Suspicious User Agent detected",
+  desc:"Microsoft's documented Defender for APIs validation test -- sends a request with a script-injection user-agent value.",
+  prereq:["An onboarded API; a valid subscription key."],
+  steps:[
+   ["Call an API operation with the User-Agent header set to the documented test value.","curl \"https://<apim-name>.azure-api.net/<api-path>/<operation>\" -H \"Ocp-Apim-Subscription-Key: <key>\" -H \"User-Agent: javascript:\""],
+   ["Alternatively use the APIM portal Test console: add a header named User-Agent with value javascript: and Send.",""]
+  ],
+  expected:"A 'Suspicious User Agent detected' alert is raised for the API endpoint.",
+  cleanup:"None required."},
+ {id:"API-03",title:"API endpoint access from a suspicious IP",type:"Reference",sev:"High",mitre:"Pre-Attack",
+  alert:"API Endpoint access from suspicious IP",
+  desc:"Detects API access from IP addresses flagged by threat intelligence. Validate via Sample alerts.",
+  prereq:["Api plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Api plan.",""],
+   ["Recognize the alert: it matches the calling IP against threat-intelligence feeds.",""]
+  ],
+  expected:"An 'API Endpoint access from suspicious IP' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"API-04",title:"API access from a Tor exit node",type:"Executable",sev:"Medium",mitre:"Pre-Attack",
+  alert:"Access from a Tor exit node to an API endpoint",
+  desc:"Calls an API endpoint while routed through the Tor network.",
+  prereq:["An onboarded API; the Tor proxy (127.0.0.1:9150)."],
+  steps:[
+   ["Route the request through the Tor SOCKS proxy.","curl --socks5-hostname 127.0.0.1:9150 \"https://<apim-name>.azure-api.net/<api-path>/<operation>\" -H \"Ocp-Apim-Subscription-Key: <key>\""]
+  ],
+  expected:"An 'Access from a Tor exit node to an API endpoint' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-05",title:"Suspicious traffic spike from a single IP",type:"Executable",sev:"Informational",mitre:"Impact",
+  alert:"Suspicious spike in API traffic from a single IP address to an API endpoint",
+  desc:"Generates a sharp burst of requests to one endpoint from a single source IP.",
+  prereq:["An onboarded API with an established baseline."],
+  steps:[
+   ["Send a rapid burst of requests to a single endpoint.","for i in $(seq 1 2000); do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/<operation>\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done"]
+  ],
+  expected:"A 'Suspicious spike in API traffic from a single IP address to an API endpoint' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-06",title:"Population-level API traffic spike",type:"Reference",sev:"Informational",mitre:"Impact",
+  alert:"Suspicious population-level spike in API traffic to an API endpoint",
+  desc:"Detects an aggregate traffic spike to an endpoint across many sources. Hard to force from one host; validate via Sample alerts.",
+  prereq:["Api plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Api plan.",""],
+   ["Recognize the alert: it baselines aggregate endpoint traffic across all clients.",""]
+  ],
+  expected:"A 'Suspicious population-level spike in API traffic to an API endpoint' alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"API-07",title:"Unusually large response payload",type:"Executable",sev:"Informational",mitre:"Initial Access",
+  alert:"Unusually large response payload transmitted between a single IP address and an API endpoint",
+  desc:"Calls an endpoint in a way that returns a response far larger than its baseline (e.g. requesting an oversized page size).",
+  prereq:["An onboarded API with an endpoint that returns a sizable dataset."],
+  steps:[
+   ["Request a very large result set from a list endpoint.","curl \"https://<apim-name>.azure-api.net/<api-path>/items?pageSize=100000\" -H \"Ocp-Apim-Subscription-Key: <key>\" -o /dev/null"]
+  ],
+  expected:"An 'Unusually large response payload...' alert is raised for the endpoint.",
+  cleanup:"None required."},
+ {id:"API-08",title:"Unusually large request body",type:"Executable",sev:"Informational",mitre:"Initial Access",
+  alert:"Unusually large request body transmitted between a single IP address and an API endpoint",
+  desc:"Sends a request with a body far larger than the endpoint's baseline.",
+  prereq:["An onboarded API with a POST/PUT endpoint."],
+  steps:[
+   ["Create a large payload file and POST it to the endpoint.","head -c 5000000 /dev/zero | tr '\\0' 'A' > big.json\ncurl -X POST \"https://<apim-name>.azure-api.net/<api-path>/<operation>\" -H \"Ocp-Apim-Subscription-Key: <key>\" -H \"Content-Type: application/json\" --data-binary @big.json"]
+  ],
+  expected:"An 'Unusually large request body...' alert is raised for the endpoint.",
+  cleanup:"Delete the local big.json file."},
+ {id:"API-09",title:"Suspicious latency spike",type:"Reference",sev:"Informational",mitre:"Initial Access",
+  alert:"(Preview) Suspicious spike in latency for traffic between a single IP address and an API endpoint",
+  desc:"Detects an abnormal latency spike for traffic from a single IP. Behavioral; validate via Sample alerts.",
+  prereq:["Api plan enabled."],
+  steps:[
+   ["Validate via the **Sample alerts** feature for the Api plan.",""],
+   ["Recognize the alert: it baselines per-IP latency and flags large deviations.",""]
+  ],
+  expected:"A latency-spike alert is raised via Sample alerts.",
+  cleanup:"None."},
+ {id:"API-10",title:"API endpoint spray from a single IP",type:"Executable",sev:"Informational",mitre:"Discovery",
+  alert:"API requests spray from a single IP address to an unusually large number of distinct API endpoints",
+  desc:"Hits a large number of distinct API endpoints from one source, mimicking endpoint discovery.",
+  prereq:["An onboarded API with many operations/paths."],
+  steps:[
+   ["Iterate over many distinct endpoint paths from one host.","for p in $(seq 1 300); do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/resource$p\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done"]
+  ],
+  expected:"An 'API requests spray from a single IP address...' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-11",title:"Parameter enumeration on an endpoint",type:"Executable",sev:"Informational",mitre:"Initial Access",
+  alert:"Parameter enumeration on an API endpoint",
+  desc:"Iterates a single parameter across a large range of values -- an enumeration / IDOR-probing pattern.",
+  prereq:["An onboarded API with an endpoint that takes an id parameter."],
+  steps:[
+   ["Enumerate an id parameter across many sequential values.","for id in $(seq 1 1000); do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/user?id=$id\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done"]
+  ],
+  expected:"A 'Parameter enumeration on an API endpoint' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-12",title:"Distributed parameter enumeration",type:"Executable",sev:"Informational",mitre:"Initial Access",
+  alert:"Distributed parameter enumeration on an API endpoint",
+  desc:"Performs the same parameter enumeration spread across multiple source IPs to evade per-IP thresholds.",
+  prereq:["An onboarded API; access to several source hosts/IPs (or cloud VMs)."],
+  steps:[
+   ["From each of several source hosts, enumerate a slice of the parameter range against the same endpoint.","for id in $(seq 1 300); do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/user?id=$id\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done"]
+  ],
+  expected:"A 'Distributed parameter enumeration on an API endpoint' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-13",title:"Anomalous parameter data types",type:"Executable",sev:"Informational",mitre:"Impact",
+  alert:"Parameter value(s) with anomalous data types in an API call",
+  desc:"Sends parameter values whose data types differ from the endpoint's baseline (e.g. a string where a number is expected).",
+  prereq:["An onboarded API with a typed parameter and an established baseline."],
+  steps:[
+   ["Call an endpoint supplying an unexpected data type for a parameter.","curl \"https://<apim-name>.azure-api.net/<api-path>/order?quantity=DROP_TABLE_or_long_string_value\" -H \"Ocp-Apim-Subscription-Key: <key>\""]
+  ],
+  expected:"A 'Parameter value(s) with anomalous data types in an API call' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-14",title:"Previously unseen parameter used",type:"Executable",sev:"Informational",mitre:"Impact",
+  alert:"Previously unseen parameter used in an API call",
+  desc:"Introduces a query parameter the endpoint has never received before -- a parameter-pollution / probing technique.",
+  prereq:["An onboarded API with an established parameter baseline."],
+  steps:[
+   ["Call an endpoint with an entirely new, never-before-seen parameter.","curl \"https://<apim-name>.azure-api.net/<api-path>/<operation>?debug=true&admin_override=1\" -H \"Ocp-Apim-Subscription-Key: <key>\""]
+  ],
+  expected:"A 'Previously unseen parameter used in an API call' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-15",title:"Suspicious user agent - scanner variant",type:"Executable",sev:"Medium",mitre:"Execution",
+  alert:"Suspicious User Agent detected",
+  desc:"Method variant of API-02 -- confirms the detection fires for recognized scanner/tool user-agent strings, not only the documented test value.",
+  prereq:["An onboarded API; a valid subscription key."],
+  steps:[
+   ["Call the API with a recognized scanner user-agent.","curl \"https://<apim-name>.azure-api.net/<api-path>/<operation>\" -H \"Ocp-Apim-Subscription-Key: <key>\" -H \"User-Agent: sqlmap/1.7\""]
+  ],
+  expected:"A 'Suspicious User Agent detected' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-16",title:"Credential-stuffing traffic spike",type:"Executable",sev:"Informational",mitre:"Impact",
+  alert:"Suspicious spike in API traffic from a single IP address to an API endpoint",
+  desc:"Drives a burst of requests against an authentication/login API endpoint, mimicking credential stuffing.",
+  prereq:["An onboarded API with a login/token endpoint."],
+  steps:[
+   ["Send a rapid burst of login attempts with varying credentials.","for i in $(seq 1 1500); do curl -s -o /dev/null -X POST \"https://<apim-name>.azure-api.net/<api-path>/login\" -H \"Ocp-Apim-Subscription-Key: <key>\" -d \"user=u$i&pass=wrong$i\"; done"]
+  ],
+  expected:"A 'Suspicious spike in API traffic from a single IP address...' alert is raised for the login endpoint.",
+  cleanup:"None required."},
+ {id:"API-17",title:"Web scraping across many endpoints",type:"Executable",sev:"Informational",mitre:"Discovery",
+  alert:"API requests spray from a single IP address to an unusually large number of distinct API endpoints",
+  desc:"Scenario variant -- systematically scrapes content across the full set of API endpoints from one client.",
+  prereq:["An onboarded API with many GET endpoints."],
+  steps:[
+   ["Walk every documented endpoint path and pull its content.","for ep in users orders products invoices payments reports settings; do for i in $(seq 1 80); do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/$ep/$i\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done; done"]
+  ],
+  expected:"An endpoint-spray alert is raised for the scraping client.",
+  cleanup:"None required."},
+ {id:"API-18",title:"Bulk data exfiltration via large responses",type:"Executable",sev:"Informational",mitre:"Initial Access",
+  alert:"Unusually large response payload transmitted between a single IP address and an API endpoint",
+  desc:"Scenario variant -- repeatedly pulls maximum-size result sets to simulate bulk data exfiltration.",
+  prereq:["An onboarded API with a paginated list endpoint."],
+  steps:[
+   ["Repeatedly request maximum-size pages from a data endpoint.","for pg in $(seq 1 50); do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/records?page=$pg&pageSize=50000\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done"]
+  ],
+  expected:"An 'Unusually large response payload...' alert is raised.",
+  cleanup:"None required."},
+ {id:"API-19",title:"Mass parameter fuzzing campaign",type:"Executable",sev:"Informational",mitre:"Initial Access",
+  alert:"Parameter enumeration on an API endpoint",
+  desc:"Scenario variant -- fuzzes parameter values with a wide mix of payloads to exercise enumeration and anomalous-type detections together.",
+  prereq:["An onboarded API with parameterized endpoints."],
+  steps:[
+   ["Fuzz a parameter with a varied payload list.","for v in 1 2 admin true null \"'OR'1\" 999999 ../../etc/passwd \"<x>\" 0xFF; do curl -s -o /dev/null \"https://<apim-name>.azure-api.net/<api-path>/item?id=$v\" -H \"Ocp-Apim-Subscription-Key: <key>\"; done"]
+  ],
+  expected:"A 'Parameter enumeration on an API endpoint' alert (and possibly anomalous-data-type alerts) is raised.",
+  cleanup:"None required."},
+ {id:"API-20",title:"Access an undocumented (shadow) API endpoint",type:"Reference",sev:"Informational",mitre:"Discovery",
+  alert:"Access to an unmonitored / undocumented API endpoint",
+  desc:"Defender for APIs surfaces endpoints receiving traffic that are not part of the documented API definition. Validate via Sample alerts and the API security dashboard.",
+  prereq:["Api plan enabled."],
+  steps:[
+   ["Send traffic to a path not defined in the API's OpenAPI specification, then review the API security dashboard for unmonitored endpoints.",""],
+   ["Validate alerting via the **Sample alerts** feature for the Api plan.",""]
+  ],
+  expected:"The endpoint appears as unmonitored/shadow in the API security dashboard; related alerts can be validated via Sample alerts.",
+  cleanup:"None."},
+ {id:"API-21",title:"Generate API sample alerts",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"Sample alerts for the Api plan",
+  desc:"Baseline pipeline check -- generate sample alerts for the API plan and confirm they appear in the portal.",
+  prereq:["Subscription Contributor role."],
+  steps:[
+   ["Open Security alerts > Sample alerts, select the subscription and the Api plan, and create sample alerts.",""],
+   ["Confirm the sample alerts appear in Defender for Cloud > Security alerts.","az security alert list --query \"[?contains(properties.alertDisplayName,'API')]\" -o table"]
+  ],
+  expected:"API sample alerts appear in the portal within a few minutes.",
+  cleanup:"None."},
+ {id:"API-22",title:"Validate API alerts in SIEM / Log Analytics",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"API alert delivered to Log Analytics / SIEM",
+  desc:"Confirms API alerts flow to your Log Analytics workspace and SIEM via Continuous export.",
+  prereq:["Continuous export to a Log Analytics workspace configured."],
+  steps:[
+   ["Run API-21 to generate API alerts.",""],
+   ["Query the SecurityAlert table for API alerts.","SecurityAlert | where DisplayName contains 'API' | sort by TimeGenerated desc"]
+  ],
+  expected:"API alerts are present in the SecurityAlert table and the connected SIEM.",
+  cleanup:"None."},
+ {id:"API-23",title:"Validate API alerts via email notifications",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"API alert delivered via email",
+  desc:"Confirms API alerts reach the configured email recipients.",
+  prereq:["Email notifications configured on the subscription."],
+  steps:[
+   ["Run API-21, or run an Executable API scenario.",""],
+   ["Confirm the alert email arrives at the configured recipients.",""]
+  ],
+  expected:"An API alert email is delivered to the configured recipients.",
+  cleanup:"None."},
+ {id:"API-24",title:"Validate API alerts trigger workflow automation",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"API alert triggered workflow automation",
+  desc:"Confirms API alerts trigger a workflow automation (Logic App) -- for example to create a ticket or post to a channel.",
+  prereq:["A workflow automation configured to trigger on security alerts."],
+  steps:[
+   ["Run API-21 to generate API alerts.",""],
+   ["Confirm the workflow automation's Logic App run history shows a triggered run.",""]
+  ],
+  expected:"The workflow automation runs in response to the API alert.",
+  cleanup:"None."},
+ {id:"API-25",title:"Validate API alerts in Microsoft Defender XDR",type:"Pipeline",sev:"Informational",mitre:"Discovery",
+  alert:"API alert visible in the Microsoft Defender portal",
+  desc:"Confirms API alerts surface in the unified Microsoft Defender (XDR) portal alongside other security alerts.",
+  prereq:["Defender for Cloud connected to the Microsoft Defender portal."],
+  steps:[
+   ["Run API-21, or run an Executable API scenario.",""],
+   ["In the Microsoft Defender portal (security.microsoft.com), open Incidents & alerts and confirm the API alert appears.",""]
+  ],
+  expected:"The API alert is visible in the Microsoft Defender XDR portal.",
+  cleanup:"None."}
+]; /*=API=*/
+
+const SCENARIOS = {
+  servers:SRV_SCENARIOS, containers:CON_SCENARIOS, storage:STO_SCENARIOS,
+  databases:DB_SCENARIOS, appservice:APP_SCENARIOS, keyvault:KV_SCENARIOS,
+  resourcemanager:RM_SCENARIOS, apis:API_SCENARIOS
+};
+
+/* =================================================================
+   APP LOGIC
+   ================================================================= */
+const LS_PROG="dfc-cwpp-poc-v1", LS_NOTES="dfc-cwpp-notes-v1";
+let progress={}, notes={};
+try{progress=JSON.parse(localStorage.getItem(LS_PROG))||{};}catch(e){progress={};}
+try{notes=JSON.parse(localStorage.getItem(LS_NOTES))||{};}catch(e){notes={};}
+const filters={q:"",sev:new Set(),type:new Set(),status:new Set()};
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function inl(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\{\{(.+?)\}\}/g,'<code class="ic">$1</code>');}
+function codeBlock(t){return '<div class="cb"><pre><code>'+esc(t)+'</code></pre><button class="copy">Copy</button></div>';}
+function tableHtml(head,rows){
+  return '<table class="tbl"><thead><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+
+    '</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+inl(c)+'</td>').join('')+'</tr>').join('')+
+    '</tbody></table>';
+}
+function gsBlock(b){
+  if(b.t==="h")return "<h3>"+esc(b.x)+"</h3>";
+  if(b.t==="p")return "<p>"+inl(b.x)+"</p>";
+  if(b.t==="code")return codeBlock(b.x);
+  if(b.t==="ul")return "<ul>"+b.x.map(i=>"<li>"+inl(i)+"</li>").join("")+"</ul>";
+  if(b.t==="ol")return "<ol>"+b.x.map(i=>"<li>"+inl(i)+"</li>").join("")+"</ol>";
+  if(b.t==="note")return '<div class="note note-'+b.v+'">'+inl(b.x)+"</div>";
+  if(b.t==="table")return tableHtml(b.head,b.rows);
+  return "";
+}
+
+function scenarioCard(sc,wlKey){
+  const st=progress[sc.id]||"notrun";
+  const searchText=(sc.id+" "+sc.title+" "+sc.alert+" "+sc.mitre+" "+sc.desc+" "+sc.type).toLowerCase();
+  let h='<div class="scenario" data-id="'+sc.id+'" data-sev="'+sc.sev+'" data-type="'+sc.type+
+    '" data-status="'+st+'" data-wl="'+wlKey+'" data-text="'+esc(searchText)+'">';
+  h+='<div class="sc-head">';
+  h+='<span class="dot '+(st==="notrun"?"":st)+'"></span>';
+  h+='<span class="sc-id">'+esc(sc.id)+'</span>';
+  h+='<span class="sc-title">'+esc(sc.title)+'</span>';
+  h+='<span class="badges">';
+  h+='<span class="badge b-type" data-v="'+sc.type+'">'+esc(sc.type)+'</span>';
+  h+='<span class="badge b-sev" data-v="'+sc.sev+'">'+esc(sc.sev)+'</span>';
+  h+='<span class="badge b-mitre">'+esc(sc.mitre)+'</span>';
+  h+='</span><span class="chev">&#9656;</span></div>';
+  h+='<div class="sc-body">';
+  h+='<div class="alert-line"><div class="k">Expected alert</div><div class="v">'+esc(sc.alert)+'</div></div>';
+  h+='<p class="d">'+inl(sc.desc)+'</p>';
+  if(sc.prereq&&sc.prereq.length){
+    h+='<h5>Prerequisites</h5><ul class="pre">'+sc.prereq.map(p=>"<li>"+inl(p)+"</li>").join("")+"</ul>";
+  }
+  h+='<h5>Steps</h5><ol class="steps">';
+  sc.steps.forEach(s=>{h+='<li><span class="stext">'+inl(s[0])+'</span>'+(s[1]?codeBlock(s[1]):"")+'</li>';});
+  h+='</ol>';
+  h+='<h5>Expected result</h5><div class="expected">'+inl(sc.expected)+'</div>';
+  if(sc.cleanup&&sc.cleanup!=="None."&&sc.cleanup!=="None required."){
+    h+='<div class="cleanup"><strong>Cleanup:</strong> '+inl(sc.cleanup)+'</div>';
+  }
+  if(sc.note)h+='<div class="note note-info">'+inl(sc.note)+'</div>';
+  h+='<div class="sc-foot">';
+  h+='<button class="statusbtn'+(st==="pass"?" sel":"")+'" data-s="pass">&#10003; Pass</button>';
+  h+='<button class="statusbtn'+(st==="fail"?" sel":"")+'" data-s="fail">&#10007; Fail</button>';
+  h+='<button class="statusbtn'+(st==="notrun"?" sel":"")+'" data-s="notrun">Not run</button>';
+  h+='<input class="sc-notes" placeholder="Observed alert name / timestamp / notes&hellip;" value="'+esc(notes[sc.id]||"")+'">';
+  h+='</div></div></div>';
+  return h;
+}
+
+function render(){
+  // Getting Started
+  let html='<section class="section" id="getting-started">';
+  html+='<div class="section-head"><span class="emoji">🚀</span><div><h2>Getting Started</h2>'+
+    '<div class="plan">Prerequisites &amp; environment setup &mdash; complete before running scenarios</div></div></div>';
+  GS.forEach(g=>{
+    html+='<div class="section gs" id="'+g.id+'" style="margin-bottom:18px">';
+    html+='<div class="section-head"><span class="emoji">'+g.icon+'</span><div><h2 style="font-size:16px">'+esc(g.title)+'</h2></div></div>';
+    html+=g.blocks.map(gsBlock).join("");
+    html+='</div>';
+  });
+  html+='</section>';
+  // Workloads
+  WORKLOADS.forEach(w=>{
+    const list=SCENARIOS[w.key]||[];
+    html+='<section class="section" id="wl-'+w.key+'">';
+    html+='<div class="section-head"><span class="emoji">'+w.icon+'</span><div>'+
+      '<h2>'+esc(w.name)+'</h2><div class="plan">'+esc(w.plan)+'</div></div></div>';
+    html+='<div class="section-desc">'+inl(w.desc)+'</div>';
+    html+='<div class="wl-prereq"><h4>Enable this plan</h4>'+codeBlock(w.enable);
+    html+='<h4 style="margin-top:10px">Workload prerequisites</h4><ul>'+
+      w.prereqs.map(p=>"<li>"+inl(p)+"</li>").join("")+'</ul></div>';
+    html+=list.map(sc=>scenarioCard(sc,w.key)).join("");
+    html+='</section>';
+  });
+  document.getElementById("sections").innerHTML=html;
+  buildNav();
+  updateProgress();
+  applyFilters();
+}
+
+function buildNav(){
+  let h='<div class="nav-sect">Reference</div>';
+  h+='<a data-target="getting-started"><span class="ico">🚀</span>Getting Started</a>';
+  h+='<div class="nav-sect">Workloads</div>';
+  WORKLOADS.forEach(w=>{
+    h+='<a data-target="wl-'+w.key+'" data-wl="'+w.key+'"><span class="ico">'+w.icon+
+      '</span>'+esc(w.name.replace("Defender for ",""))+'<span class="ct" id="ct-'+w.key+'">0/25</span></a>';
+  });
+  document.getElementById("nav").innerHTML=h;
+}
+
+function updateProgress(){
+  let total=0,pass=0,fail=0;
+  WORKLOADS.forEach(w=>{
+    const list=SCENARIOS[w.key]||[];
+    let p=0,f=0;
+    list.forEach(sc=>{const s=progress[sc.id];if(s==="pass")p++;if(s==="fail")f++;});
+    total+=list.length;pass+=p;fail+=f;
+    const ct=document.getElementById("ct-"+w.key);
+    if(ct){ct.textContent=(p+f)+"/"+list.length;
+      ct.parentElement.classList.toggle("done",list.length>0&&(p+f)===list.length);}
+  });
+  const done=pass+fail, pct=total?Math.round(done/total*100):0;
+  document.getElementById("navPct").textContent=pct+"%";
+  document.getElementById("navDone").textContent=done;
+  document.getElementById("navTotal").textContent=total;
+  document.getElementById("navP").style.width=(total?pass/total*100:0)+"%";
+  document.getElementById("navF").style.width=(total?fail/total*100:0)+"%";
+}
+
+function applyFilters(){
+  const q=filters.q.trim().toLowerCase();
+  document.querySelectorAll(".scenario").forEach(el=>{
+    let show=true;
+    if(q&&el.dataset.text.indexOf(q)===-1)show=false;
+    if(filters.sev.size&&!filters.sev.has(el.dataset.sev))show=false;
+    if(filters.type.size&&!filters.type.has(el.dataset.type))show=false;
+    if(filters.status.size&&!filters.status.has(el.dataset.status))show=false;
+    el.classList.toggle("hidden",!show);
+  });
+  document.querySelectorAll('section[id^="wl-"]').forEach(sec=>{
+    const any=sec.querySelector(".scenario:not(.hidden)");
+    const filtering=q||filters.sev.size||filters.type.size||filters.status.size;
+    sec.style.display=(filtering&&!any)?"none":"";
+  });
+}
+
+function setStatus(id,s){
+  if(s==="notrun")delete progress[id]; else progress[id]=s;
+  localStorage.setItem(LS_PROG,JSON.stringify(progress));
+  const card=document.querySelector('.scenario[data-id="'+id+'"]');
+  if(card){
+    card.dataset.status=s;
+    card.querySelector(".dot").className="dot "+(s==="notrun"?"":s);
+    card.querySelectorAll(".statusbtn").forEach(b=>b.classList.toggle("sel",b.dataset.s===s));
+  }
+  updateProgress();applyFilters();
+}
+
+function exportCSV(){
+  const rows=[["ID","Workload","Title","Type","Severity","MITRE","Expected Alert","Status","Notes"]];
+  WORKLOADS.forEach(w=>{(SCENARIOS[w.key]||[]).forEach(sc=>{
+    rows.push([sc.id,w.name,sc.title,sc.type,sc.sev,sc.mitre,sc.alert,
+      progress[sc.id]||"notrun",notes[sc.id]||""]);
+  });});
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="dfc-cwpp-poc-results.csv";
+  a.click();
+}
+
+/* ---- Events ---- */
+document.addEventListener("click",e=>{
+  const copy=e.target.closest(".copy");
+  if(copy){
+    const code=copy.parentElement.querySelector("code").textContent;
+    navigator.clipboard.writeText(code).then(()=>{
+      copy.textContent="Copied";copy.classList.add("ok");
+      setTimeout(()=>{copy.textContent="Copy";copy.classList.remove("ok");},1400);
+    });
+    return;
+  }
+  const sb=e.target.closest(".statusbtn");
+  if(sb){setStatus(sb.closest(".scenario").dataset.id,sb.dataset.s);return;}
+  const head=e.target.closest(".sc-head");
+  if(head){head.parentElement.classList.toggle("open");return;}
+  const nav=e.target.closest(".nav a");
+  if(nav){const t=document.getElementById(nav.dataset.target);
+    if(t)t.scrollIntoView({behavior:"smooth",block:"start"});return;}
+});
+document.addEventListener("input",e=>{
+  if(e.target.classList.contains("sc-notes")){
+    const id=e.target.closest(".scenario").dataset.id;
+    notes[id]=e.target.value;
+    localStorage.setItem(LS_NOTES,JSON.stringify(notes));
+  }
+});
+document.getElementById("search").addEventListener("input",e=>{filters.q=e.target.value;applyFilters();});
+function wireChips(containerId,key){
+  document.getElementById(containerId).addEventListener("click",e=>{
+    const chip=e.target.closest(".chip");if(!chip)return;
+    const val=chip.dataset[key];
+    chip.classList.toggle("on");
+    if(filters[key].has(val))filters[key].delete(val);else filters[key].add(val);
+    applyFilters();
+  });
+}
+wireChips("sevFilters","sev");
+wireChips("typeFilters","type");
+wireChips("statusFilters","status");
+document.getElementById("expandAll").addEventListener("click",()=>
+  document.querySelectorAll(".scenario").forEach(s=>s.classList.add("open")));
+document.getElementById("collapseAll").addEventListener("click",()=>
+  document.querySelectorAll(".scenario").forEach(s=>s.classList.remove("open")));
+document.getElementById("exportBtn").addEventListener("click",exportCSV);
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Clear all Pass/Fail results and notes saved in this browser?")){
+    progress={};notes={};
+    localStorage.removeItem(LS_PROG);localStorage.removeItem(LS_NOTES);
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
